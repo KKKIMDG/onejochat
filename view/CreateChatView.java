@@ -106,6 +106,11 @@ public class CreateChatView extends JDialog {
         bottomPanel.add(secretBtn);
         bottomPanel.add(normalBtn);
 
+        secretBtn.addActionListener(e -> {
+            SecretChatCodeDialog dialog = new SecretChatCodeDialog((JFrame) SwingUtilities.getWindowAncestor(CreateChatView.this));
+            dialog.setVisible(true);
+        });
+
         add(bottomPanel, BorderLayout.SOUTH);
     }
 }
