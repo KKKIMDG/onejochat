@@ -62,7 +62,7 @@ public class SignUpController {
 
     // 서버에 회원가입 요청 보내기
     private boolean sendSignupRequestToServer(String id, String pw, String name) {
-        try (Socket socket = new Socket("서버주소", 1234);
+        try (Socket socket = new Socket("localhost", 9001);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
@@ -81,7 +81,7 @@ public class SignUpController {
 
     // 서버에 ID 중복 체크 요청 보내기
     private boolean sendCheckIdRequestToServer(String id) {
-        try (Socket socket = new Socket("서버주소", 1234);
+        try (Socket socket = new Socket("localhost", 9001);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
