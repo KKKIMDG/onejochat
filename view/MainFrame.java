@@ -5,12 +5,16 @@ import controller.SignUpController;
 
 import javax.swing.*;
 import java.awt.*;
+import java.net.Socket;
 
 public class MainFrame extends JFrame {
     private CardLayout cardLayout;
     private JPanel mainPanel;
+    private Socket socket;
 
-    public MainFrame() {
+    public MainFrame(Socket socket) {
+        this.socket = socket;
+
         setTitle("onejo");
         setSize(400, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -30,19 +34,20 @@ public class MainFrame extends JFrame {
         mainPanel.add(signupView, "signupView");
 
         // 🔹 버튼 이벤트 연결
-        loginView.getJoinButton().addActionListener(e -> cardLayout.show(mainPanel, "signupView"));
+        loginView.getJoinButton().addActionListener(new java.awt.event.ActionListener() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                cardLayout.show(mainPanel, "signupView");
+            }
+        });
 
-        // 🔹 회원가입 컨트롤러 연결
-        new SignUpController(signupView, mainPanel, cardLayout);
-        // 🔹 로그인 컨트롤러 연결 추가
-        new LoginController(loginView, mainPanel, cardLayout);
-        // 🔹 메인 프레임 세팅
+        // 🔹 컨트롤러 연결 (socket 넘기려면 생성자도 수정 필요)
+        new SignUpController(signupView, mainPanel, cardLayout /*, socket */);
+        new LoginController(loginView, mainPanel, cardLayout /*, socket */);
+
+        // 🔹 초기화
         add(mainPanel);
-        cardLayout.show(mainPanel, "loginView");  // 최초 화면은 로그인
+        cardLayout.show(mainPanel, "loginView");
         setVisible(true);
-    }
-
-    public static void main(String[] args) {
-        SwingUtilities.invokeLater(MainFrame::new);
     }
 }
