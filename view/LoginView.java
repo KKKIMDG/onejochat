@@ -9,7 +9,7 @@ public class LoginView extends JPanel {
     private JButton loginButton;
     private JButton joinButton;
 
-    public LoginView() {
+    public LoginView(CardLayout cardLayout, JPanel mainPanel) {
         setLayout(new BorderLayout());
         setPreferredSize(new Dimension(350, 500)); // 크기 고정
 

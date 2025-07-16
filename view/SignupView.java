@@ -10,18 +10,19 @@ public class SignupView extends JPanel {
     private JPasswordField confirmPasswordField;
     private JButton checkIdButton;
     private JButton signupButton;
+    private JButton cancelButton;
 
-    public SignupView() {
+    public SignupView(CardLayout cardLayout, JPanel mainPanel) {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 🔹 상단 패널 (아이콘 + 타이틀)
+        // 🔹 상단
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 0, 20));
         topPanel.setBackground(Color.WHITE);
 
-        JLabel iconLabel = new JLabel("🙋");
+        JLabel iconLabel = new JLabel("🙋‍");
         iconLabel.setFont(new Font("SansSerif", Font.PLAIN, 36));
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
@@ -34,50 +35,35 @@ public class SignupView extends JPanel {
         topPanel.add(Box.createVerticalStrut(5));
         topPanel.add(titleLabel);
 
-        // 🔹 입력 필드 영역
+        // 🔹 중앙 입력폼
         JPanel formPanel = new JPanel();
         formPanel.setLayout(new BoxLayout(formPanel, BoxLayout.Y_AXIS));
         formPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 10, 30));
         formPanel.setBackground(Color.WHITE);
 
+        JLabel nameLabel = new JLabel("이름 입력:");
         nameField = new JTextField();
-        nameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        nameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        styleField(nameField);
 
-        JLabel nameLabel = new JLabel("이름 입력");
-        nameLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-
+        JLabel idLabel = new JLabel("id 입력:");
         idField = new JTextField();
-        idField.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        idField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        styleField(idField);
 
         checkIdButton = new JButton("중복확인");
 
-        JPanel idPanel = new JPanel();
-        idPanel.setLayout(new BorderLayout(5, 5));
+        JPanel idPanel = new JPanel(new BorderLayout(5, 5));
         idPanel.add(idField, BorderLayout.CENTER);
         idPanel.add(checkIdButton, BorderLayout.EAST);
         idPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         idPanel.setOpaque(false);
 
-        JLabel idLabel = new JLabel("id 입력");
-        idLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-
+        JLabel pwLabel = new JLabel("password 입력:");
         passwordField = new JPasswordField();
-        passwordField.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        passwordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        passwordField.setEchoChar('•');
+        styleField(passwordField);
 
-        JLabel pwLabel = new JLabel("비밀번호 입력");
-        pwLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
-
+        JLabel confirmLabel = new JLabel("password 재입력:");
         confirmPasswordField = new JPasswordField();
-        confirmPasswordField.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        confirmPasswordField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
-        confirmPasswordField.setEchoChar('•');
-
-        JLabel confirmLabel = new JLabel("비밀번호 확인");
-        confirmLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        styleField(confirmPasswordField);
 
         formPanel.add(nameLabel);
         formPanel.add(nameField);
@@ -91,17 +77,18 @@ public class SignupView extends JPanel {
         formPanel.add(confirmLabel);
         formPanel.add(confirmPasswordField);
 
-        // 🔹 완료 버튼
+        // 🔹 버튼 영역
         signupButton = new JButton("완료");
-        signupButton.setFont(new Font("SansSerif", Font.PLAIN, 14));
-        signupButton.setPreferredSize(new Dimension(120, 40));
+        cancelButton = new JButton("취소");
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.setBackground(Color.WHITE);
         buttonPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 20, 20));
+        buttonPanel.setLayout(new FlowLayout(FlowLayout.CENTER, 20, 0));
+        buttonPanel.add(cancelButton);
         buttonPanel.add(signupButton);
 
-        // 🔹 전체 구성 감싸는 패널
+        // 🔹 컨테이너
         JPanel container = new JPanel();
         container.setLayout(new BoxLayout(container, BoxLayout.Y_AXIS));
         container.setBorder(BorderFactory.createLineBorder(new Color(0x0099FF), 2));
@@ -112,9 +99,17 @@ public class SignupView extends JPanel {
         container.add(buttonPanel);
 
         add(container, BorderLayout.CENTER);
+
+        // 🔄 취소 버튼 누르면 로그인 화면으로 전환
+        cancelButton.addActionListener(e -> cardLayout.show(mainPanel, "login"));
     }
 
-    // 🔹 Getter 메서드
+    private void styleField(JTextField field) {
+        field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
+        field.setFont(new Font("SansSerif", Font.PLAIN, 14));
+    }
+
+    // 🔹 Getter
     public String getNameInput() {
         return nameField.getText();
     }
@@ -137,5 +132,9 @@ public class SignupView extends JPanel {
 
     public JButton getSignupButton() {
         return signupButton;
+    }
+
+    public JButton getCancelButton() {
+        return cancelButton;
     }
 }
