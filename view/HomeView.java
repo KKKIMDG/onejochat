@@ -71,8 +71,7 @@ public class HomeView extends JPanel {
 
         // 🔷 친구 리스트 (샘플)
         DefaultListModel<String> friendListModel = new DefaultListModel<>();
-        friendListModel.addElement("다빈");
-        friendListModel.addElement("동건");
+//        friendListModel.addElement();
 
         JList<String> friendList = new JList<>(friendListModel);
         friendList.setFont(new Font("SansSerif", Font.BOLD, 25));
