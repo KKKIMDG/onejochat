@@ -4,9 +4,8 @@ import view.SignupView;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.*;
+import java.net.Socket;
 
 public class SignUpController {
     private SignupView signupView;
@@ -19,75 +18,83 @@ public class SignUpController {
         this.cardLayout = cardLayout;
 
         // ✅ 완료 버튼 이벤트
-        signupView.getSignupButton().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String name = signupView.getNameInput();
-                String id = signupView.getIdInput();
-                String pw = signupView.getPasswordInput();
-                String pw2 = signupView.getConfirmPasswordInput();
+        signupView.getSignupButton().addActionListener(e -> {
+            String name = signupView.getNameInput();
+            String id = signupView.getIdInput();
+            String pw = signupView.getPasswordInput();
+            String pw2 = signupView.getConfirmPasswordInput();
 
-                if (!pw.equals(pw2)) {
-                    JOptionPane.showMessageDialog(null, "비밀번호가 일치하지 않습니다!");
-                    return;
-                }
+            if (!pw.equals(pw2)) {
+                JOptionPane.showMessageDialog(null, "비밀번호가 일치하지 않습니다!");
+                return;
+            }
 
-                saveToFile("user_data.txt", name, id, pw);
+            boolean success = sendSignupRequestToServer(id, pw, name);
+            if (success) {
                 JOptionPane.showMessageDialog(null, "회원가입이 완료되었습니다!");
                 cardLayout.show(mainPanel, "loginView");  // 로그인 화면으로 전환
+            } else {
+                JOptionPane.showMessageDialog(null, "회원가입 실패! 서버에 문제가 있습니다.");
             }
         });
 
         // ✅ 취소 버튼 이벤트
-        signupView.getCancelButton().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                cardLayout.show(mainPanel, "loginView"); // 로그인 화면으로 돌아가기
-            }
+        signupView.getCancelButton().addActionListener(e -> {
+            cardLayout.show(mainPanel, "loginView"); // 로그인 화면으로 돌아가기
         });
-        signupView.getCheckButton().addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String inputId = signupView.getUserId();
-                if (inputId.isEmpty()) {
-                    JOptionPane.showMessageDialog(signupView, "ID를 입력해주세요.");
-                    return;
-                }
 
-                boolean isDuplicate = isDuplicateId("user_data.txt", inputId);
-                if (isDuplicate) {
-                    JOptionPane.showMessageDialog(signupView, "이미 존재하는 ID입니다.");
-                } else {
-                    JOptionPane.showMessageDialog(signupView, "사용 가능한 ID입니다.");
-                }
+        // ✅ 중복확인 버튼 이벤트
+        signupView.getCheckButton().addActionListener(e -> {
+            String inputId = signupView.getUserId();
+            if (inputId.isEmpty()) {
+                JOptionPane.showMessageDialog(signupView, "ID를 입력해주세요.");
+                return;
+            }
+
+            boolean isDuplicate = sendCheckIdRequestToServer(inputId);
+            if (isDuplicate) {
+                JOptionPane.showMessageDialog(signupView, "이미 존재하는 ID입니다.");
+            } else {
+                JOptionPane.showMessageDialog(signupView, "사용 가능한 ID입니다.");
             }
         });
     }
-    // 화원가입 완료시 파일 안에 저장.
-    private void saveToFile(String filename, String name, String id, String pw) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename, true))) { // append = true
-            writer.write("name: " + name + "\n");
-            writer.write("ID: " + id + "\n");
-            writer.write("PW: " + pw + "\n");
-            writer.write("--------------------\n");
+
+    // 서버에 회원가입 요청 보내기
+    private boolean sendSignupRequestToServer(String id, String pw, String name) {
+        try (Socket socket = new Socket("서버주소", 1234);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+        ) {
+            String signupData = String.format("SIGNUP:ID=%s,PW=%s,NAME=%s\n", id, pw, name);
+            writer.write(signupData);
+            writer.flush();
+
+            String response = reader.readLine();
+            return "SIGNUP_SUCCESS".equals(response);
+
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
     }
-    private boolean isDuplicateId(String filename, String inputId) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(filename))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("ID: ")) {
-                    String savedId = line.substring(4).trim(); // "ID: " 이후 문자열
-                    if (savedId.equals(inputId)) {
-                        return true; // 중복 ID 발견
-                    }
-                }
-            }
+
+    // 서버에 ID 중복 체크 요청 보내기
+    private boolean sendCheckIdRequestToServer(String id) {
+        try (Socket socket = new Socket("서버주소", 1234);
+             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+        ) {
+            String checkData = "CHECK_ID:" + id + "\n";
+            writer.write(checkData);
+            writer.flush();
+
+            String response = reader.readLine();
+            return "ID_DUPLICATE".equals(response);
+
         } catch (IOException e) {
             e.printStackTrace();
+            return false;
         }
-        return false; // 중복 없음
     }
 }
