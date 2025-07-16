@@ -2,6 +2,8 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 public class ShowChatView extends JDialog {
 
@@ -31,6 +33,12 @@ public class ShowChatView extends JDialog {
         label1.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
         label1.setHorizontalAlignment(SwingConstants.LEFT);
         label1.setAlignmentX(Component.LEFT_ALIGNMENT);
+        label1.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)); // 클릭 느낌 주기
+        label1.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                new ChatRoomView("동건", "다빈");
+            }
+        });
         chatListPanel.add(label1);
         chatListPanel.add(new JSeparator());
 
@@ -40,6 +48,12 @@ public class ShowChatView extends JDialog {
         label2.setBorder(BorderFactory.createEmptyBorder(10, 5, 10, 5));
         label2.setHorizontalAlignment(SwingConstants.LEFT);
         label2.setAlignmentX(Component.LEFT_ALIGNMENT);
+        label2.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+        label2.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent evt) {
+                new ChatRoomView("공부 채팅방", "다빈");
+            }
+        });
         chatListPanel.add(label2);
         chatListPanel.add(new JSeparator());
 
