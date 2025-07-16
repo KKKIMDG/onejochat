@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class LoginView extends JPanel {
-    private JTextField usernameField;
+    private JTextField userIdField;
     private JPasswordField passwordField;
     private JButton loginButton;
     private JButton joinButton;
@@ -28,9 +28,9 @@ public class LoginView extends JPanel {
         logo.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         // 🔷 ID 필드
-        usernameField = new JTextField("id 입력:");
-        usernameField.setMaximumSize(new Dimension(250, 40));
-        usernameField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        userIdField = new JTextField("id 입력:");
+        userIdField.setMaximumSize(new Dimension(250, 40));
+        userIdField.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
         // 🔷 PW 필드
         passwordField = new JPasswordField("password 입력:");
@@ -56,7 +56,7 @@ public class LoginView extends JPanel {
         wrapper.add(Box.createVerticalStrut(40));
         wrapper.add(logo);
         wrapper.add(Box.createVerticalStrut(10));
-        wrapper.add(usernameField);
+        wrapper.add(userIdField);
         wrapper.add(Box.createVerticalStrut(15));
         wrapper.add(passwordField);
         wrapper.add(Box.createVerticalStrut(30));
@@ -68,8 +68,8 @@ public class LoginView extends JPanel {
         add(wrapper, BorderLayout.CENTER);
     }
 
-    public String getUsername() {
-        return usernameField.getText();
+    public String getUserId() {
+        return userIdField.getText();
     }
 
     public String getPassword() {

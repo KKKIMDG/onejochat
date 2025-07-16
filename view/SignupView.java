@@ -104,6 +104,7 @@ public class SignupView extends JPanel {
         cancelButton.addActionListener(e -> cardLayout.show(mainPanel, "login"));
     }
 
+
     private void styleField(JTextField field) {
         field.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
         field.setFont(new Font("SansSerif", Font.PLAIN, 14));
@@ -136,5 +137,13 @@ public class SignupView extends JPanel {
 
     public JButton getCancelButton() {
         return cancelButton;
+    }
+
+    public String getUserId() {
+        return idField.getText().trim();
+    }
+
+    public JButton getCheckButton() {
+        return checkIdButton;
     }
 }

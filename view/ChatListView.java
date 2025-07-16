@@ -5,9 +5,9 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
-public class ShowChatView extends JDialog {
+public class ChatListView extends JDialog {
 
-    public ShowChatView(JFrame parent) {
+    public ChatListView(JFrame parent) {
         super(parent, "채팅방 목록", true);
 
         // 전체 패널 설정
