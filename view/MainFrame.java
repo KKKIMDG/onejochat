@@ -1,6 +1,7 @@
-import view.HomeView;
-import view.LoginView;
-import view.SignupView;
+package view;
+
+import controller.LoginController;
+import controller.SignUpController;
 
 import javax.swing.*;
 import java.awt.*;
@@ -29,13 +30,15 @@ public class MainFrame extends JFrame {
         mainPanel.add(signupView, "signupView");
 
         // 🔹 버튼 이벤트 연결
-        loginView.getLoginButton().addActionListener(e -> cardLayout.show(mainPanel, "homeView"));
-
         loginView.getJoinButton().addActionListener(e -> cardLayout.show(mainPanel, "signupView"));
 
-        // 🔹 기본 세팅
+        // 🔹 회원가입 컨트롤러 연결
+        new SignUpController(signupView, mainPanel, cardLayout);
+        // 🔹 로그인 컨트롤러 연결 추가
+        new LoginController(loginView, mainPanel, cardLayout);
+        // 🔹 메인 프레임 세팅
         add(mainPanel);
-        cardLayout.show(mainPanel, "loginView");
+        cardLayout.show(mainPanel, "loginView");  // 최초 화면은 로그인
         setVisible(true);
     }
 

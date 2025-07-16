@@ -102,7 +102,7 @@ public class HomeView extends JPanel {
         // 채팅방 목록 보기 버튼 클릭 시 다이얼로그 실행
         listRoomBtn.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                ShowChatView dialog = new ShowChatView((JFrame) SwingUtilities.getWindowAncestor(HomeView.this));
+                ChatListView dialog = new ChatListView((JFrame) SwingUtilities.getWindowAncestor(HomeView.this));
                 dialog.setVisible(true);
             }
         });
