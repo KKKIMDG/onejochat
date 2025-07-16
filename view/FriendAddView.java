@@ -7,26 +7,27 @@ public class FriendAddView extends JDialog {
     private JTextField idField;
     private JLabel resultLabel;
     private JButton requestButton;
+    private JButton searchButton;  // 🔹 외부에서 접근할 수 있도록 필드로 승격
 
     public FriendAddView(JFrame parent) {
         super(parent, "친구 추가", true);
-        setSize(350, 500);  // 다이얼로그 창 크기
-        setLocationRelativeTo(parent); // 부모창 기준 가운데 정렬
+        setSize(350, 500);
+        setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
 
-        // 🔹 상단 아이콘과 제목 영역
+        // 🔹 상단 패널
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setBackground(Color.WHITE);
         topPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
 
-        JLabel iconLabel = new JLabel("💬");  // 아이콘
+        JLabel iconLabel = new JLabel("💬");
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         iconLabel.setFont(new Font("SansSerif", Font.PLAIN, 40));
         topPanel.add(iconLabel);
 
-        JLabel titleLabel = new JLabel("친구 추가");  // 제목
+        JLabel titleLabel = new JLabel("친구 추가");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 20));
         titleLabel.setForeground(new Color(0x007BFF));
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -40,7 +41,7 @@ public class FriendAddView extends JDialog {
         centerPanel.setBackground(Color.WHITE);
         centerPanel.setBorder(BorderFactory.createEmptyBorder(10, 30, 10, 30));
 
-        // 친구 ID 입력 필드
+        // ID 입력 필드
         idField = new JTextField();
         idField.setFont(new Font("SansSerif", Font.PLAIN, 15));
         idField.setPreferredSize(new Dimension(200, 35));
@@ -50,8 +51,8 @@ public class FriendAddView extends JDialog {
         centerPanel.add(idField);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // 검색 버튼
-        JButton searchButton = new JButton("🔍 검색");
+        // 🔍 검색 버튼
+        searchButton = new JButton("🔍 검색");
         searchButton.setForeground(new Color(0x007BFF));
         searchButton.setFont(new Font("SansSerif", Font.BOLD, 14));
         searchButton.setBorderPainted(false);
@@ -61,7 +62,7 @@ public class FriendAddView extends JDialog {
         centerPanel.add(searchButton);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // 검색 결과 출력 라벨
+        // 검색 결과 라벨
         resultLabel = new JLabel("검색 결과:");
         resultLabel.setFont(new Font("SansSerif", Font.PLAIN, 14));
         resultLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -70,7 +71,7 @@ public class FriendAddView extends JDialog {
 
         // 친구 요청 버튼
         requestButton = new JButton("친구 요청");
-        requestButton.setVisible(true);  // 항상 보이게 설정
+        requestButton.setVisible(true);
         requestButton.setAlignmentX(Component.CENTER_ALIGNMENT);
         requestButton.setBackground(Color.WHITE);
         requestButton.setForeground(new Color(0x007BFF));
@@ -83,5 +84,26 @@ public class FriendAddView extends JDialog {
         centerPanel.add(requestButton);
 
         add(centerPanel, BorderLayout.CENTER);
+    }
+
+    // ✅ Getter 메서드들
+    public JButton getSearchButton() {
+        return searchButton;
+    }
+
+    public JButton getRequestButton() {
+        return requestButton;
+    }
+
+    public String getInputId() {
+        return idField.getText().trim();
+    }
+
+    public void setResultText(String text) {
+        resultLabel.setText(text);
+    }
+
+    public String getResultText() {
+        return resultLabel.getText();
     }
 }

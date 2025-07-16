@@ -1,5 +1,6 @@
 package view;
 
+import controller.FriendAddController;
 import controller.LoginController;
 import controller.SignUpController;
 
@@ -33,21 +34,25 @@ public class MainFrame extends JFrame {
         mainPanel.add(homeView, "homeView");
         mainPanel.add(signupView, "signupView");
 
-        // 🔹 버튼 이벤트 연결
-        loginView.getJoinButton().addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent e) {
-                cardLayout.show(mainPanel, "signupView");
-            }
+        // 🔹 친구추가 다이얼로그 및 컨트롤러 연결
+        FriendAddView friendAddView = new FriendAddView(this);
+        new FriendAddController(friendAddView, socket);
+
+        // 🔹 HomeView에서 친구추가 버튼 누르면 다이얼로그 띄움
+        homeView.getAddFriendButton().addActionListener(e -> {
+            friendAddView.setVisible(true);
         });
 
-        // 🔹 컨트롤러 연결 (socket 넘기려면 생성자도 수정 필요)
-        new SignUpController(signupView, mainPanel, cardLayout /*, socket */);
-        new LoginController(loginView, mainPanel, cardLayout /*, socket */);
+        // 🔹 버튼 이벤트 연결
+        loginView.getJoinButton().addActionListener(e -> cardLayout.show(mainPanel, "signupView"));
 
-        // 🔹 초기화
+        // 🔹 컨트롤러 연결
+        new SignUpController(signupView, mainPanel, cardLayout);
+        new LoginController(loginView, mainPanel, cardLayout);
+
         add(mainPanel);
         cardLayout.show(mainPanel, "loginView");
+
         setVisible(true);
     }
 }
