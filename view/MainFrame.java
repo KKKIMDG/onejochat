@@ -59,6 +59,7 @@ public class MainFrame extends JFrame {
         SignupView signupView = new SignupView(cardLayout, mainPanel);
         // createChatView는 myFriends가 채워진 이후에 다시 초기화됨 (setMyId 참고)
         CreateChatView createChatView = new CreateChatView(cardLayout, mainPanel, myFriends);
+        new controller.ChatController(createChatView, socket, myId, this, cardLayout, mainPanel);
         List<ChatRoom> chatRooms = new ChatService().getAllChatRooms(); // 채팅방 목록 불러오기
         ChatListView chatListView = new ChatListView(cardLayout, mainPanel, chatRooms, myId); // 현재 로그인 사용자 ID 전달
         chatRoomView = new ChatRoomView("채팅방", "사용자", () -> cardLayout.show(mainPanel, "homeView"));
@@ -148,6 +149,7 @@ public class MainFrame extends JFrame {
 
         // 새로운 CreateChatView 생성 및 등록
         CreateChatView updated = new CreateChatView(cardLayout, mainPanel, myFriends);
+        new controller.ChatController(updated, socket, myId, this, cardLayout, mainPanel);
         mainPanel.add(updated, "createChatRoomView");
         mainPanel.revalidate();
         mainPanel.repaint();

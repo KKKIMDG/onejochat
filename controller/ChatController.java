@@ -4,6 +4,7 @@ import service.ChatService;
 import model.ChatRoom;
 import view.ChatListView;
 import view.CreateChatView;
+import view.ChatRoomView;
 
 import javax.swing.*;
 import java.awt.*;
@@ -88,52 +89,53 @@ public class ChatController {
             new SwingWorker<Void, Void>() {
                 @Override
                 protected Void doInBackground() {
-                    sendCreateChatRoomRequest(roomName, invitedFriends);
+                    boolean created = sendCreateChatRoomRequest(roomName, invitedFriends);
+                    if (created) {
+                        // 생성 성공 시 ChatRoomView로 이동
+                        SwingUtilities.invokeLater(() -> {
+                            ChatRoomView chatRoomView = new ChatRoomView(roomName, currentUserId);
+                            mainPanel.add(chatRoomView, "chatRoomView");
+                            cardLayout.show(mainPanel, "chatRoomView");
+                            mainPanel.revalidate();
+                            mainPanel.repaint();
+                        });
+                    }
                     return null;
-                }
-
-                @Override
-                protected void done() {
-                    SwingUtilities.invokeLater(() -> {
-                        List<ChatRoom> roomList = chatService.getAllChatRooms();
-                        ChatListView chatListView = new ChatListView(cardLayout, mainPanel, roomList, currentUserId);
-                        mainPanel.add(chatListView, "chatListView");
-                        cardLayout.show(mainPanel, "chatListView");
-                        mainPanel.revalidate();
-                        mainPanel.repaint();
-                    });
                 }
             }.execute();
         });
     }
 
-    private void sendCreateChatRoomRequest(String roomName, List<String> invitedFriends) {
+    private boolean sendCreateChatRoomRequest(String roomName, List<String> invitedFriends) {
         if (writer == null) {
             SwingUtilities.invokeLater(() ->
                     JOptionPane.showMessageDialog(null, "서버 연결이 없습니다."));
-            return;
+            return false;
         }
-
         try {
             writer.println("CREATE_CHATROOM");
             writer.println("roomName:" + roomName);
             writer.println("owner:" + currentUserId);
             writer.println("invited:" + String.join(",", invitedFriends));
+            writer.flush();
 
-            boolean created = chatService.createChatRoomFile(roomName, invitedFriends);
-
-            SwingUtilities.invokeLater(() -> {
-                if (created) {
-                    JOptionPane.showMessageDialog(null, "채팅방 생성 완료 및 파일 저장 성공");
-                } else {
-                    JOptionPane.showMessageDialog(null, "채팅방 생성 요청은 성공했지만 파일 저장 실패");
-                }
-            });
-
+            // 서버 응답 대기
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = reader.readLine();
+            if ("CREATE_CHATROOM_SUCCESS".equals(response)) {
+                SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(null, "채팅방 생성 완료 및 파일 저장 성공"));
+                return true;
+            } else {
+                SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(null, "채팅방 생성 요청은 성공했지만 파일 저장 실패"));
+                return false;
+            }
         } catch (Exception ex) {
             ex.printStackTrace();
             SwingUtilities.invokeLater(() ->
                     JOptionPane.showMessageDialog(null, "서버에 채팅방 생성 요청 실패"));
+            return false;
         }
     }
 

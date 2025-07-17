@@ -50,6 +50,8 @@ public class ClientHandler extends Thread {
                     handleSearchId(request, writer);
                 } else if (request.startsWith("REQUEST_FRIEND:")) {
                     handleFriendRequest(request, writer);
+                } else if (request.startsWith("CREATE_CHATROOM")) {
+                    handleCreateChatRoom(reader, writer);
                 } else if (request.startsWith("QUIT")) {
                     System.out.println("클라이언트 연결 종료 요청");
                     break;
@@ -178,6 +180,56 @@ public class ClientHandler extends Thread {
             writer.write("FRIEND_FAIL\n");
         }
         writer.flush();
+    }
+
+    /**
+     * 채팅방 생성 요청을 처리합니다.
+     * 클라이언트로부터 채팅방 이름, 방장, 참여자 목록을 받아 파일로 저장합니다.
+     */
+    private void handleCreateChatRoom(BufferedReader reader, BufferedWriter writer) throws IOException {
+        String roomName = null;
+        String owner = null;
+        String invited = null;
+        // 채팅방 정보는 다음 3줄로 온다고 가정
+        for (int i = 0; i < 3; i++) {
+            String line = reader.readLine();
+            if (line == null) break;
+            if (line.startsWith("roomName:")) roomName = line.substring("roomName:".length());
+            else if (line.startsWith("owner:")) owner = line.substring("owner:".length());
+            else if (line.startsWith("invited:")) invited = line.substring("invited:".length());
+        }
+        if (roomName == null || owner == null || invited == null) {
+            writer.write("CREATE_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        boolean created = createChatRoomFile(roomName, owner, invited);
+        if (created) {
+            writer.write("CREATE_CHATROOM_SUCCESS\n");
+        } else {
+            writer.write("CREATE_CHATROOM_FAIL\n");
+        }
+        writer.flush();
+    }
+
+    /**
+     * 채팅방 정보를 파일로 저장합니다.
+     * @param roomName 채팅방 이름
+     * @param owner 방장 ID
+     * @param invited 참여자 목록(쉼표 구분)
+     * @return 생성 성공 여부
+     */
+    private boolean createChatRoomFile(String roomName, String owner, String invited) {
+        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter("chatroom_" + roomName + ".txt"))) {
+            fileWriter.write("ROOM_NAME: " + roomName + System.lineSeparator());
+            fileWriter.write("OWNER: " + owner + System.lineSeparator());
+            fileWriter.write("PARTICIPANTS: " + invited + System.lineSeparator());
+            fileWriter.write("--------------------" + System.lineSeparator());
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 
     /**

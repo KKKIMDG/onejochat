@@ -85,7 +85,7 @@ public class LoginController {
                 JOptionPane.showMessageDialog(loginView, "로그인 성공");
                 currentUserId = id;  // 현재 사용자 ID 저장
                 if (mainFrame != null) {
-                    mainFr.setMyId(id);  // 메인 프레임에도 전달
+                    mainFrame.setMyId(id);  // 메인 프레임에도 전달
                 }
                 cardLayout.show(mainPanel, "homeView");  // 홈 화면으로 전환
             } else {
