@@ -1,16 +1,44 @@
 package model;
-//
-/**
- * 채팅방 모델 클래스
- * 채팅 애플리케이션의 채팅방 정보를 담는 데이터 클래스입니다.
- */
+
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+
 public class ChatRoom {
+    private final String roomName;
+    private final List<String> participants;
 
-    /** 채팅방 고유 ID */
-    private String roomId;
-    /** 채팅방 접속 코드 (비밀번호) */
-    private String roomCode;
+    public ChatRoom(String roomName, List<String> participants) {
+        this.roomName = roomName;
+        this.participants = Collections.unmodifiableList(participants); // 불변 리스트로 감싸기
+    }
 
-    // TODO: 채팅방 관련 메서드 구현 필요
-    // 예: getter/setter, 참여자 목록 관리 등
+    public String getRoomName() {
+        return roomName;
+    }
+
+    public List<String> getParticipants() {
+        return participants;
+    }
+
+    @Override
+    public String toString() {
+        return "ChatRoom{" +
+                "roomName='" + roomName + '\'' +
+                ", participants=" + participants +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof ChatRoom)) return false;
+        ChatRoom chatRoom = (ChatRoom) o;
+        return Objects.equals(roomName, chatRoom.roomName);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(roomName);
+    }
 }

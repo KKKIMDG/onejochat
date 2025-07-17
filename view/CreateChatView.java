@@ -10,9 +10,11 @@ public class CreateChatView extends JPanel {
 
     private final JTextField roomNameField;
     private final JList<String> friendList;
+    private final DefaultListModel<String> friendListModel;
     private final DefaultListModel<String> invitedModel;
     private final JList<String> invitedList;
     private final JButton inviteBtn;
+    private final JButton deleteBtn; // 삭제 버튼 추가
     private final JButton normalBtn;
     private final JButton secretBtn;
 
@@ -57,8 +59,8 @@ public class CreateChatView extends JPanel {
         centerPanel.add(roomNameField);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 12)));
 
-        // 친구 리스트 JList
-        DefaultListModel<String> friendListModel = new DefaultListModel<>();
+        // 친구 리스트
+        friendListModel = new DefaultListModel<>();
         for (String f : friends) friendListModel.addElement(f);
         friendList = new JList<>(friendListModel);
         friendList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -75,10 +77,9 @@ public class CreateChatView extends JPanel {
         inviteBtnPanel.setBackground(Color.WHITE);
         inviteBtnPanel.add(inviteBtn);
         centerPanel.add(inviteBtnPanel);
-
         centerPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
-        // 초대한 친구 JList
+        // 초대한 친구 리스트
         invitedModel = new DefaultListModel<>();
         invitedList = new JList<>(invitedModel);
         invitedList.setFont(new Font("SansSerif", Font.PLAIN, 15));
@@ -86,8 +87,17 @@ public class CreateChatView extends JPanel {
         invitedPane.setBorder(BorderFactory.createTitledBorder("초대한 친구"));
         centerPanel.add(invitedPane);
 
-        centerPanel.add(Box.createVerticalGlue());
+        // 삭제 버튼
+        deleteBtn = new JButton("❌ 삭제");
+        deleteBtn.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        deleteBtn.setAlignmentX(Component.RIGHT_ALIGNMENT);
+        JPanel deleteBtnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        deleteBtnPanel.setBackground(Color.WHITE);
+        deleteBtnPanel.add(deleteBtn);
+        centerPanel.add(Box.createRigidArea(new Dimension(0, 5)));
+        centerPanel.add(deleteBtnPanel);
 
+        centerPanel.add(Box.createVerticalGlue());
         add(centerPanel, BorderLayout.CENTER);
 
         // 하단 버튼
@@ -105,7 +115,7 @@ public class CreateChatView extends JPanel {
         bottomPanel.add(secretBtn);
         bottomPanel.add(normalBtn);
 
-        // 뒤로가기
+        // 뒤로가기 버튼
         JButton backBtn = new JButton("뒤로가기");
         backBtn.setFont(new Font("SansSerif", Font.BOLD, 15));
         backBtn.setForeground(new Color(0x6C757D));
@@ -118,11 +128,31 @@ public class CreateChatView extends JPanel {
         buttonPanel.add(backBtn, BorderLayout.SOUTH);
 
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // 초대 버튼 기능: 선택된 친구를 초대 목록에 추가
+        inviteBtn.addActionListener(e -> {
+            String selected = friendList.getSelectedValue();
+            if (selected != null && !invitedModel.contains(selected)) {
+                invitedModel.addElement(selected);
+                friendListModel.removeElement(selected);
+            }
+        });
+
+        // 삭제 버튼 기능: 초대한 친구 목록에서 제거 후 친구목록으로 복귀
+        deleteBtn.addActionListener(e -> {
+            String selected = invitedList.getSelectedValue();
+            if (selected != null) {
+                invitedModel.removeElement(selected);
+                friendListModel.addElement(selected);
+            }
+        });
     }
 
-    // --- 컨트롤러 연동용 getter ---
+    // 외부에서 버튼 접근할 수 있도록 getter 제공
     public JButton getInviteBtn() { return inviteBtn; }
+    public JButton getDeleteBtn() { return deleteBtn; }
     public JList<String> getFriendList() { return friendList; }
+    public DefaultListModel<String> getFriendListModel() { return friendListModel; }
     public DefaultListModel<String> getInvitedModel() { return invitedModel; }
     public JList<String> getInvitedList() { return invitedList; }
     public JTextField getRoomNameField() { return roomNameField; }

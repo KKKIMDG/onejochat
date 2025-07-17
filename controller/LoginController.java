@@ -27,7 +27,7 @@ public class LoginController {
 
     /**
      * 로그인 컨트롤러 생성자
-     * 
+     *
      * @param loginView 로그인 뷰
      * @param mainPanel 메인 패널
      * @param cardLayout 카드 레이아웃
@@ -43,7 +43,7 @@ public class LoginController {
 
     /**
      * 현재 로그인한 사용자의 ID를 반환합니다.
-     * 
+     *
      * @return 현재 사용자 ID
      */
     public static String getCurrentUserId() {
@@ -52,7 +52,7 @@ public class LoginController {
 //
     /**
      * 메인 프레임을 설정합니다.
-     * 
+     *
      * @param mainFrame 설정할 메인 프레임
      */
     public void setMainFrame(MainFrame mainFrame) {
@@ -70,7 +70,7 @@ public class LoginController {
 
         try {
             // 서버에 소켓 연결
-            Socket socket = new Socket("localhost", 9002);
+            Socket socket = new Socket("localhost", 9001);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
@@ -85,7 +85,7 @@ public class LoginController {
                 JOptionPane.showMessageDialog(loginView, "로그인 성공");
                 currentUserId = id;  // 현재 사용자 ID 저장
                 if (mainFrame != null) {
-                    mainFrame.setMyId(id);  // 메인 프레임에도 전달
+                    mainFr.setMyId(id);  // 메인 프레임에도 전달
                 }
                 cardLayout.show(mainPanel, "homeView");  // 홈 화면으로 전환
             } else {
