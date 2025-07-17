@@ -7,7 +7,7 @@ import java.awt.*;
 import java.io.*;
 import java.util.HashSet;
 import java.util.function.Consumer;
-
+//
 /**
  * 홈 뷰 클래스
  * 로그인 후 메인 화면을 제공하는 클래스입니다.

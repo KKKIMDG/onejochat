@@ -71,7 +71,7 @@ public class MainFrame extends JFrame {
             new FriendAddController(friendAddView, socket, myId, homeView);
             friendAddView.setVisible(true);
         });
-
+//
         // 홈 뷰의 뷰 전환 핸들러 설정
         homeView.setViewChangeHandler(viewName -> cardLayout.show(mainPanel, viewName));
 

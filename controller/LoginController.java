@@ -49,7 +49,7 @@ public class LoginController {
     public static String getCurrentUserId() {
         return currentUserId;
     }
-
+//
     /**
      * 메인 프레임을 설정합니다.
      * 

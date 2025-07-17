@@ -22,7 +22,7 @@ public class SignupView extends JPanel {
     private JButton signupButton;
     /** 취소 버튼 */
     private JButton cancelButton;
-
+//
     /**
      * 회원가입 뷰 생성자
      * 

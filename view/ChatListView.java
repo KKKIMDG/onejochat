@@ -61,7 +61,7 @@ public class ChatListView extends JPanel {
         label.setHorizontalAlignment(SwingConstants.LEFT);
         label.setAlignmentX(Component.LEFT_ALIGNMENT);
         label.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-
+//
         label.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 MainFrame mainFrame = (MainFrame) SwingUtilities.getWindowAncestor(mainPanel);

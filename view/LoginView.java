@@ -16,7 +16,7 @@ public class LoginView extends JPanel {
     private JButton loginButton;
     /** 회원가입 버튼 */
     private JButton joinButton;
-
+//
     /**
      * 로그인 뷰 생성자
      * 
