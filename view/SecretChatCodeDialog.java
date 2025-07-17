@@ -13,7 +13,7 @@ public class SecretChatCodeDialog extends JDialog {
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
         getContentPane().setBackground(Color.WHITE);
-
+//
         // 타이틀
         JLabel titleLabel = new JLabel("채팅방 코드 설정");
         titleLabel.setFont(new Font("SansSerif", Font.BOLD, 18));

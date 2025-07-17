@@ -19,7 +19,7 @@ public class ChatRoomView extends JPanel {
     private JButton sendButton;
     /** 채팅방 나가기 버튼 */
     private JButton exitButton;
-
+//
     /**
      * 채팅방 뷰 생성자 (기본)
      * 

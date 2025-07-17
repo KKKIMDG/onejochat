@@ -7,5 +7,5 @@ package KDT.onejochat.model;
  */
 public class Message {
     // TODO: 메시지 관련 필드와 메서드 구현 필요
-    // 예: sender, content, timestamp, chatRoomId 등
+    // 예: sender, content, timestamp, chatRoomId 등//
 }

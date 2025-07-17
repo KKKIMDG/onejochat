@@ -5,7 +5,7 @@ import java.net.Socket;
 import java.net.SocketTimeoutException;
 
 /**
- * 로그인 서비스 클래스
+ * 로그인 서비스 클래스//
  * 서버와 통신하여 사용자 로그인을 처리하는 서비스 클래스입니다.
  */
 public class LoginService {

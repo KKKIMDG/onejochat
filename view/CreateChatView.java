@@ -14,7 +14,7 @@ public class CreateChatView extends JPanel {
     private CardLayout cardLayout;
     /** 메인 패널 참조 */
     private JPanel mainPanel;
-
+//
     /**
      * 채팅방 생성 뷰 생성자
      * 

@@ -10,7 +10,7 @@ import java.net.Socket;
  * 채팅 애플리케이션의 클라이언트를 시작하고 서버에 연결합니다.
  */
 public class ClientMain {
-    
+    //
     /**
      * 메인 메서드 - 클라이언트 애플리케이션을 시작합니다.
      * 

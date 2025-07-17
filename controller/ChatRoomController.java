@@ -1,5 +1,5 @@
 package KDT.onejochat.controller;
-
+//
 /**
  * 채팅방 컨트롤러 클래스
  * 채팅방 뷰와 서버 간의 상호작용을 관리하는 컨트롤러입니다.

@@ -9,7 +9,7 @@ import java.net.Socket;
  * 채팅 애플리케이션의 서버를 시작하고 클라이언트 연결을 관리합니다.
  */
 public class MainServer {
-
+//
     /**
      * 메인 메서드 - 서버를 시작하고 클라이언트 연결을 수락합니다.
      * 

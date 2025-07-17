@@ -16,7 +16,7 @@ public class FriendAddView extends JDialog {
     private JButton requestButton;
     /** 검색 버튼 */
     private JButton searchButton;
-
+//
     /**
      * 친구 추가 뷰 생성자
      * 

@@ -11,7 +11,7 @@ import java.net.Socket;
 public class ClientHandler extends Thread {
     /** 클라이언트와의 소켓 연결 */
     private Socket socket;
-
+//
     /**
      * 클라이언트 핸들러 생성자
      * 
