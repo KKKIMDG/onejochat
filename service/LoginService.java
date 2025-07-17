@@ -1,42 +1,43 @@
 package service;
 
-import model.User;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class LoginService {
 
-    User user = new User();
+    private static final String SERVER_IP = "100.100.101.27"; // 실제 서버 IP
+    private static final int SERVER_PORT = 9001;             // 서버 포트 번호
+    private static final int SOCKET_TIMEOUT_MS = 5000;       // 5초 타임아웃 설정
 
-    // 🔐 2. 텍스트 파일과 비교
     public boolean isLogin(String inputId, String inputPw) {
-        try (BufferedReader reader = new BufferedReader(new FileReader("user_data.txt"))) {
-            String line;
-            String savedId = "";
-            String savedPw = "";
+        try (Socket socket = new Socket(SERVER_IP, SERVER_PORT)) {
+            socket.setSoTimeout(SOCKET_TIMEOUT_MS);
 
-            while ((line = reader.readLine()) != null) {
-                if (line.startsWith("ID:")) {
-                    savedId = line.substring(4).trim();
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
-                    line = reader.readLine(); // 다음 줄은 PW 라고 가정
-                    if (line != null && line.startsWith("PW:")) {
-                        savedPw = line.substring(4).trim();
+            String request = String.format("LOGIN:ID=%s,PW=%s\n", inputId, inputPw);
+            writer.write(request);
+            writer.flush();
 
-                        // 바로 비교
-                        if (inputId.equals(savedId) && inputPw.equals(savedPw)) {
-                            return true;
-                        }
-                    }
-                }
+            String response = reader.readLine();
+
+            if (response == null) {
+                System.err.println("서버로부터 응답이 없습니다.");
+                return false;
             }
 
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            System.out.println("서버 응답: " + response);
 
-        return false; // 못 찾았으면 false
+            return "LOGIN_SUCCESS".equals(response.trim());
+
+        } catch (SocketTimeoutException ste) {
+            System.err.println("서버 응답 시간 초과");
+            return false;
+        } catch (IOException e) {
+            System.err.println("서버 연결 오류: " + e.getMessage());
+            return false;
+        }
     }
 }

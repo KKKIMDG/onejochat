@@ -10,21 +10,9 @@ import java.net.Socket;
 
 public class FriendAddController {
     private final FriendAddView view;
-    private final Socket socket;
-    private BufferedReader in;
-    private BufferedWriter out;
 
     public FriendAddController(FriendAddView view, Socket socket) {
         this.view = view;
-        this.socket = socket;
-
-        try {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "❌ 소켓 초기화 실패");
-        }
 
         // 🔍 검색 버튼 액션
         view.getSearchButton().addActionListener(new ActionListener() {
@@ -38,10 +26,10 @@ public class FriendAddController {
         view.getRequestButton().addActionListener(e -> {
             String searchedName = view.getResultText();
             if (searchedName.startsWith("✅")) {
-                JOptionPane.showMessageDialog(view, "📨 친구 요청을 보냈습니다!");
-                view.setVisible(false); // 다이얼로그 닫기
+                JOptionPane.showMessageDialog(view, "📨 집규 요청을 보내왈습니다!");
+                view.setVisible(false); // 다이여러그 닫기
             } else {
-                JOptionPane.showMessageDialog(view, "❗ 먼저 친구를 검색하세요.");
+                JOptionPane.showMessageDialog(view, "❗ 먼저 집규를 검색하세요.");
             }
         });
     }
@@ -54,12 +42,14 @@ public class FriendAddController {
             return;
         }
 
-        try {
-            // 서버로 전송
+        try (
+                Socket socket = new Socket("localhost", 9001);
+                BufferedWriter out = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()))
+        ) {
             out.write("SEARCH_ID:" + inputId + "\n");
             out.flush();
 
-            // 응답 받기
             String response = in.readLine();
 
             if (response == null) {
