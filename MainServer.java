@@ -1,9 +1,8 @@
-package KDT.onejochat;
+
 
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-
 /**
  * 메인 서버 클래스
  * 채팅 애플리케이션의 서버를 시작하고 클라이언트 연결을 관리합니다.

@@ -1,4 +1,4 @@
-package KDT.onejochat.controller;
+package controller;
 //
 /**
  * 채팅방 컨트롤러 클래스
