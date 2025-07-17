@@ -5,8 +5,8 @@ import java.net.Socket;
 public class MainServer {
 
     public static void main(String[] args) throws IOException {
-        ServerSocket serverSocket = new ServerSocket(9001);
-        System.out.println("서버 시작: 포트 9001");
+        ServerSocket serverSocket = new ServerSocket(9002);
+        System.out.println("서버 시작: 포트 9002");
 
         while (true) {
             Socket clientSocket = serverSocket.accept(); // 클라이언트 접속 대기

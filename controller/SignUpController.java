@@ -81,7 +81,7 @@ public class SignUpController {
 
     // 서버에 ID 중복 체크 요청 보내기
     private boolean sendCheckIdRequestToServer(String id) {
-        try (Socket socket = new Socket("localhost", 9001);
+        try (Socket socket = new Socket("localhost", 9002);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {

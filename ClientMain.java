@@ -6,7 +6,7 @@ import java.net.Socket;
 public class ClientMain {
     public static void main(String[] args) {
         try {
-            Socket socket = new Socket("localhost", 9001); // 서버 연결
+            Socket socket = new Socket("localhost", 9002); // 서버 연결
             System.out.println("서버 연결 성공");
 
             SwingUtilities.invokeLater(new Runnable() {

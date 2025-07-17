@@ -37,7 +37,7 @@ public class LoginController {
         String pw = loginView.getPassword();
 
         try {
-            Socket socket = new Socket("localhost", 9001);
+            Socket socket = new Socket("localhost", 9002);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 
