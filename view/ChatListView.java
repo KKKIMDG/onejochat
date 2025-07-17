@@ -62,10 +62,20 @@ public class ChatListView extends JPanel {
         label.addMouseListener(new MouseAdapter() {
             public void mouseClicked(MouseEvent evt) {
                 MainFrame mainFrame = (MainFrame) SwingUtilities.getWindowAncestor(mainPanel);
-                mainFrame.openChatRoom(roomTitle, userName);
+                // ownerId_roomName 분리
+                String[] parts = roomTitle.split("_", 2);
+                String roomName;
+                String ownerId;
+                if (parts.length > 1) {
+                    ownerId = parts[0];
+                    roomName = parts[1];
+                } else {
+                    roomName = roomTitle;
+                    ownerId = roomTitle; // 일반방은 ownerId=roomName
+                }
+                mainFrame.openChatRoom(roomName, ownerId);
             }
         });
-
         return label;
     }
 }

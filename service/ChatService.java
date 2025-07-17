@@ -7,7 +7,7 @@ import java.util.*;
 
 public class ChatService {
 
-    private static final String CHAT_FOLDER = "chatrooms";
+    private static final String CHAT_FOLDER = "chat";
 
     public ChatService() {
         File dir = new File(CHAT_FOLDER);

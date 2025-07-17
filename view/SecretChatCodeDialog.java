@@ -5,6 +5,9 @@ import java.awt.*;
 
 public class SecretChatCodeDialog extends JDialog {
 
+    private String code = null;
+    public String getCode() { return code; }
+
     public SecretChatCodeDialog(JFrame parent) {
         super(parent, "채팅방 코드 설정", true);
 
@@ -46,9 +49,9 @@ public class SecretChatCodeDialog extends JDialog {
 
         // 버튼 동작 예시 (실제로는 필요한 동작 구현)
         confirmBtn.addActionListener(e -> {
-            String code = codeField.getText();
-            if (!code.isEmpty()) {
-                System.out.println("입력된 코드: " + code);
+            String input = codeField.getText();
+            if (!input.isEmpty()) {
+                code = input;
                 dispose();  // 닫기
             }
         });

@@ -88,7 +88,11 @@ public class FriendAddController {
                         if (homeView != null) {
                             homeView.refreshFriendListFromFile(currentUserId);
                         }
-
+                        // MainFrame의 친구 리스트도 새로고침
+                        JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(view);
+                        if (topFrame instanceof view.MainFrame) {
+                            ((view.MainFrame) topFrame).refreshFriendsList();
+                        }
                         JOptionPane.showMessageDialog(view, "🎉 친구가 추가되었습니다!");
                         view.setVisible(false);
                     } else {

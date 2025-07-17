@@ -8,6 +8,8 @@ import service.ChatService;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
 import java.util.ArrayList;
@@ -33,7 +35,7 @@ public class MainFrame extends JFrame {
     /** 채팅방 뷰 참조 */
     private ChatRoomView chatRoomView;
     /** 친구 목록 저장 리스트 */
-    private List<String> myFriends = new ArrayList<>();
+    public List<String> myFriends = new ArrayList<>();
 
     /**
      * 메인 프레임 생성자
@@ -46,8 +48,33 @@ public class MainFrame extends JFrame {
         // 프레임 기본 설정
         setTitle("onejo");
         setSize(400, 700);
-        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // 종료 동작 커스텀
         setLocationRelativeTo(null);  // 화면 중앙에 위치
+
+        // x버튼(윈도우 종료) 클릭 시 로그아웃/종료 선택 다이얼로그
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                int result = JOptionPane.showOptionDialog(
+                        MainFrame.this,
+                        "로그아웃 또는 종료를 선택하세요.",
+                        "로그아웃/종료",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.QUESTION_MESSAGE,
+                        null,
+                        new String[]{"로그아웃", "종료"},
+                        "로그아웃");
+                if (result == JOptionPane.YES_OPTION) { // 로그아웃
+                    // 친구목록, myId 등 모두 초기화
+                    myFriends.clear();
+                    myId = null;
+                    if (homeView != null) homeView.refreshFriendListFromFile("");
+                    cardLayout.show(mainPanel, "loginView");
+                } else if (result == JOptionPane.NO_OPTION) { // 종료
+                    System.exit(0);
+                }
+            }
+        });
 
         // 카드 레이아웃 및 메인 패널 초기화
         cardLayout = new CardLayout();
@@ -60,9 +87,28 @@ public class MainFrame extends JFrame {
         // createChatView는 myFriends가 채워진 이후에 다시 초기화됨 (setMyId 참고)
         CreateChatView createChatView = new CreateChatView(cardLayout, mainPanel, myFriends);
         new controller.ChatController(createChatView, socket, myId, this, cardLayout, mainPanel);
-        List<ChatRoom> chatRooms = new ChatService().getAllChatRooms(); // 채팅방 목록 불러오기
-        ChatListView chatListView = new ChatListView(cardLayout, mainPanel, chatRooms, myId); // 현재 로그인 사용자 ID 전달
-        chatRoomView = new ChatRoomView("채팅방", "사용자", () -> cardLayout.show(mainPanel, "homeView"));
+        // 로그인 성공 시 서버에서 내 채팅방 목록 받아오기
+        List<String> myRoomNames = new ArrayList<>();
+        try {
+            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer.println("GET_MY_CHATROOMS:ID=" + myId);
+            writer.flush();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if ("END_OF_CHATROOMS".equals(line)) break;
+                myRoomNames.add(line);
+            }
+        } catch (Exception e) {
+            // 에러 시 빈 목록
+        }
+        // ChatRoom 객체로 변환 (참여자 정보 없이 이름만)
+        List<ChatRoom> myChatRooms = new ArrayList<>();
+        for (String room : myRoomNames) {
+            myChatRooms.add(new model.ChatRoom(room, List.of(myId))); // 임시로 참여자 myId만
+        }
+        ChatListView chatListView = new ChatListView(cardLayout, mainPanel, myChatRooms, myId);
+        chatRoomView = new ChatRoomView("채팅방", myId, socket, myId, mainPanel, cardLayout);
 
         // 메인 패널에 뷰 등록
         mainPanel.add(loginView, "loginView");
@@ -79,13 +125,23 @@ public class MainFrame extends JFrame {
             friendAddView.setVisible(true);
         });
 
-        // 홈 뷰 → 다른 뷰 전환 핸들러 설정
-        homeView.setViewChangeHandler(viewName -> {
-            if (viewName.equals("createChatRoomView")) {
-                refreshCreateChatView();
-            }
-            cardLayout.show(mainPanel, viewName);
+        // 홈 뷰 하단 버튼 직접 뷰 전환 연결
+        homeView.getCreateRoomButton().addActionListener(e -> {
+            refreshCreateChatView();
+            cardLayout.show(mainPanel, "createChatRoomView");
         });
+        homeView.getListRoomButton().addActionListener(e -> {
+            refreshChatListView();
+            cardLayout.show(mainPanel, "chatRoomListView");
+        });
+
+        // 홈 뷰 → 다른 뷰 전환 핸들러 설정
+        // homeView.setViewChangeHandler(viewName -> {
+        //     if (viewName.equals("createChatRoomView")) {
+        //         refreshCreateChatView();
+        //     }
+        //     cardLayout.show(mainPanel, viewName);
+        // });
 
         // 로그인 → 회원가입 이동
         loginView.getJoinButton().addActionListener(e -> cardLayout.show(mainPanel, "signupView"));
@@ -111,6 +167,7 @@ public class MainFrame extends JFrame {
     public void setMyId(String myId) {
         this.myId = myId;
         loadFriendsFromFile(myId);
+        refreshChatListView();
     }
 
     /**
@@ -156,6 +213,41 @@ public class MainFrame extends JFrame {
     }
 
     /**
+     * 채팅방 목록 뷰 갱신 (서버에서 최신 채팅방 목록 가져오기)
+     */
+    public void refreshChatListView() {
+        List<String> myRoomNames = new ArrayList<>();
+        try {
+            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer.println("GET_MY_CHATROOMS:ID=" + myId);
+            writer.flush();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if ("END_OF_CHATROOMS".equals(line)) break;
+                myRoomNames.add(line);
+            }
+        } catch (Exception e) {
+            // 에러 시 빈 목록
+        }
+        List<ChatRoom> myChatRooms = new ArrayList<>();
+        for (String room : myRoomNames) {
+            myChatRooms.add(new model.ChatRoom(room, List.of(myId)));
+        }
+        ChatListView chatListView = new ChatListView(cardLayout, mainPanel, myChatRooms, myId);
+        mainPanel.add(chatListView, "chatRoomListView");
+        mainPanel.revalidate();
+        mainPanel.repaint();
+    }
+
+    /**
+     * 친구 목록을 강제로 새로고침 (파일에서 다시 읽기)
+     */
+    public void refreshFriendsList() {
+        loadFriendsFromFile(myId);
+    }
+
+    /**
      * 홈 뷰 반환
      */
     public HomeView getHomeView() {
@@ -165,12 +257,28 @@ public class MainFrame extends JFrame {
     /**
      * 채팅방 열기 및 뷰 전환
      */
-    public void openChatRoom(String roomTitle, String userName) {
-        mainPanel.remove(chatRoomView);
-        chatRoomView = new ChatRoomView(roomTitle, userName, () -> cardLayout.show(mainPanel, "homeView"));
-        mainPanel.add(chatRoomView, "chatRoomView");
-        mainPanel.revalidate();
-        mainPanel.repaint();
-        cardLayout.show(mainPanel, "chatRoomView");
+    public void openChatRoom(String roomName, String ownerId) {
+        // 일반방이면 ownerId=roomName으로 강제
+        if (ownerId == null || ownerId.isEmpty() || ownerId.equals(roomName)) {
+            ownerId = roomName;
+            mainPanel.remove(chatRoomView);
+            chatRoomView = new ChatRoomView(roomName, ownerId, socket, myId, mainPanel, cardLayout);
+            mainPanel.add(chatRoomView, "chatRoomView");
+            mainPanel.revalidate();
+            mainPanel.repaint();
+            cardLayout.show(mainPanel, "chatRoomView");
+        } else {
+            // 비밀방: 코드 입력 다이얼로그
+            SecretChatCodeDialog dialog = new SecretChatCodeDialog(this);
+            dialog.setVisible(true);
+            String code = dialog.getCode();
+            if (code == null || code.isEmpty()) return;
+            mainPanel.remove(chatRoomView);
+            chatRoomView = new ChatRoomView(roomName, ownerId, socket, myId, mainPanel, cardLayout);
+            mainPanel.add(chatRoomView, "chatRoomView");
+            mainPanel.revalidate();
+            mainPanel.repaint();
+            cardLayout.show(mainPanel, "chatRoomView");
+        }
     }
 }

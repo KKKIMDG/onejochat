@@ -92,9 +92,19 @@ public class LoginController {
                 // 로그인 실패 시 처리
                 JOptionPane.showMessageDialog(loginView, "로그인 실패");
             }
+            // 로그인 성공/실패와 관계없이 비밀번호 필드 비우기
+            clearPasswordField();
             socket.close();
         } catch (IOException ex) {
             ex.printStackTrace();
+            clearPasswordField();
+        }
+    }
+
+    // ID 저장/불러오기/삭제 관련 메서드
+    private void clearPasswordField() {
+        if (loginView != null) {
+            loginView.setPassword("");
         }
     }
 }

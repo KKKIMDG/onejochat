@@ -2,6 +2,7 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import javax.swing.text.*;
 
 /**
  * 회원가입 뷰 클래스
@@ -71,6 +72,8 @@ public class SignupView extends JPanel {
         JLabel idLabel = new JLabel("id 입력:");
         idField = new JTextField();
         styleField(idField);
+        // 한글 입력 방지 필터 적용
+        ((AbstractDocument)idField.getDocument()).setDocumentFilter(new NoKoreanFilter());
         checkIdButton = new JButton("중복확인");
 
         // ID 입력 패널 (필드와 버튼을 함께 배치)
@@ -84,6 +87,8 @@ public class SignupView extends JPanel {
         JLabel pwLabel = new JLabel("password 입력:");
         passwordField = new JPasswordField();
         styleField(passwordField);
+        // 한글 입력 방지 필터 적용
+        ((AbstractDocument)passwordField.getDocument()).setDocumentFilter(new NoKoreanFilter());
 
         // 비밀번호 확인 입력 필드 생성
         JLabel confirmLabel = new JLabel("password 재입력:");
@@ -220,5 +225,21 @@ public class SignupView extends JPanel {
      */
     public JButton getCheckButton() {
         return checkIdButton;
+    }
+
+    // 한글 입력 방지 DocumentFilter
+    static class NoKoreanFilter extends DocumentFilter {
+        @Override
+        public void insertString(FilterBypass fb, int offset, String string, AttributeSet attr) throws BadLocationException {
+            if (string == null || !string.matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*")) {
+                super.insertString(fb, offset, string, attr);
+            }
+        }
+        @Override
+        public void replace(FilterBypass fb, int offset, int length, String text, AttributeSet attrs) throws BadLocationException {
+            if (text == null || !text.matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*")) {
+                super.replace(fb, offset, length, text, attrs);
+            }
+        }
     }
 }

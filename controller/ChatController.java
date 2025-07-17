@@ -93,7 +93,59 @@ public class ChatController {
                     if (created) {
                         // 생성 성공 시 ChatRoomView로 이동
                         SwingUtilities.invokeLater(() -> {
-                            ChatRoomView chatRoomView = new ChatRoomView(roomName, currentUserId);
+                            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
+                            if (topFrame instanceof view.MainFrame) {
+                                ((view.MainFrame) topFrame).refreshChatListView();
+                            }
+                            ChatRoomView chatRoomView = new ChatRoomView(roomName, currentUserId, socket, currentUserId, mainPanel, cardLayout);
+                            mainPanel.add(chatRoomView, "chatRoomView");
+                            cardLayout.show(mainPanel, "chatRoomView");
+                            mainPanel.revalidate();
+                            mainPanel.repaint();
+                        });
+                    }
+                    return null;
+                }
+            }.execute();
+        });
+
+        // 비밀채팅방 생성 버튼
+        createChatView.getSecretButton().addActionListener(e -> {
+            String roomName = createChatView.getRoomNameField().getText().trim();
+            DefaultListModel<String> model = createChatView.getInvitedModel();
+
+            if (roomName.isEmpty() || model.isEmpty()) {
+                JOptionPane.showMessageDialog(null, "방 이름과 초대할 친구를 입력해주세요.");
+                return;
+            }
+
+            // 룸 코드 입력 다이얼로그
+            String roomCode = JOptionPane.showInputDialog(null, "비밀채팅방 입장 코드를 입력하세요:", "룸 코드 설정", JOptionPane.PLAIN_MESSAGE);
+            if (roomCode == null || roomCode.trim().isEmpty()) {
+                JOptionPane.showMessageDialog(null, "룸 코드를 입력해야 합니다.");
+                return;
+            }
+
+            List<String> invitedFriends = new ArrayList<>();
+            for (int i = 0; i < model.getSize(); i++) {
+                invitedFriends.add(model.getElementAt(i));
+            }
+            if (!invitedFriends.contains(currentUserId)) {
+                invitedFriends.add(currentUserId);
+            }
+
+            new SwingWorker<Void, Void>() {
+                @Override
+                protected Void doInBackground() {
+                    boolean created = sendCreateSecretChatRoomRequest(roomName, invitedFriends, roomCode);
+                    if (created) {
+                        // 생성 성공 시 ChatRoomView로 이동
+                        SwingUtilities.invokeLater(() -> {
+                            JFrame topFrame = (JFrame) SwingUtilities.getWindowAncestor(mainPanel);
+                            if (topFrame instanceof view.MainFrame) {
+                                ((view.MainFrame) topFrame).refreshChatListView();
+                            }
+                            ChatRoomView chatRoomView = new ChatRoomView(roomName, currentUserId, socket, currentUserId, mainPanel, cardLayout);
                             mainPanel.add(chatRoomView, "chatRoomView");
                             cardLayout.show(mainPanel, "chatRoomView");
                             mainPanel.revalidate();
@@ -135,6 +187,40 @@ public class ChatController {
             ex.printStackTrace();
             SwingUtilities.invokeLater(() ->
                     JOptionPane.showMessageDialog(null, "서버에 채팅방 생성 요청 실패"));
+            return false;
+        }
+    }
+
+    private boolean sendCreateSecretChatRoomRequest(String roomName, List<String> invitedFriends, String roomCode) {
+        if (writer == null) {
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(null, "서버 연결이 없습니다."));
+            return false;
+        }
+        try {
+            writer.println("CREATE_SECRET_CHATROOM");
+            writer.println("roomName:" + roomName);
+            writer.println("owner:" + currentUserId);
+            writer.println("invited:" + String.join(",", invitedFriends));
+            writer.println("roomCode:" + roomCode);
+            writer.flush();
+
+            // 서버 응답 대기
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            String response = reader.readLine();
+            if ("CREATE_CHATROOM_SUCCESS".equals(response)) {
+                SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(null, "비밀채팅방 생성 완료 및 파일 저장 성공"));
+                return true;
+            } else {
+                SwingUtilities.invokeLater(() ->
+                        JOptionPane.showMessageDialog(null, "비밀채팅방 생성 요청은 성공했지만 파일 저장 실패"));
+                return false;
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            SwingUtilities.invokeLater(() ->
+                    JOptionPane.showMessageDialog(null, "서버에 비밀채팅방 생성 요청 실패"));
             return false;
         }
     }
