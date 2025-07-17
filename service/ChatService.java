@@ -1,28 +1,27 @@
 package service;
 
-import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.List;
+import model.ChatRoom;
+
+import java.io.*;
+import java.util.*;
 
 public class ChatService {
 
-    /**
-     * 채팅방 생성 및 참여자 저장
-     * 첫 번째 줄에 환영 메시지를 기록하고, 참여자 이름을 기록합니다.
-     *
-     * @param roomName 채팅방 이름
-     * @param participants 참여자 이름 리스트
-     * @return 저장 성공 여부
-     */
+    private static final String CHAT_FOLDER = "chatrooms";
+
+    public ChatService() {
+        File dir = new File(CHAT_FOLDER);
+        if (!dir.exists()) dir.mkdir(); // chatrooms 폴더 없으면 생성
+    }
+
     public boolean createChatRoomFile(String roomName, List<String> participants) {
-        File chatFile = new File(roomName + ".txt");//
+        File folder = new File("chat"); // ✅ 채팅파일 저장 폴더
+        if (!folder.exists()) folder.mkdirs(); // 폴더 없으면 생성
+
+        File chatFile = new File(folder, roomName + ".txt"); // 폴더 안에 파일 저장
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(chatFile))) {
-            // 첫 줄 환영 메시지 작성
             writer.write("환영합니다. " + roomName + " 채팅방입니다.\n");
-            // 참여자 리스트 기록
             writer.write("참여자: " + String.join(", ", participants) + "\n");
             writer.write("-------------------------\n");
             return true;
@@ -32,16 +31,8 @@ public class ChatService {
         }
     }
 
-    /**
-     * 채팅 메시지를 채팅방 파일에 추가 저장
-     *
-     * @param roomName 채팅방 이름
-     * @param sender 메시지 보낸 사람 이름
-     * @param message 메시지 내용
-     * @return 저장 성공 여부
-     */
     public boolean appendChatMessage(String roomName, String sender, String message) {
-        File chatFile = new File(roomName + ".txt");
+        File chatFile = new File(CHAT_FOLDER, roomName + ".txt");
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(chatFile, true))) {
             writer.write(sender + ": " + message + "\n");
@@ -52,6 +43,35 @@ public class ChatService {
         }
     }
 
-    // 친구 초대 리스트 관리 기능 등은 UI 컨트롤러에서 처리하고,
-    // 필요한 경우 추가 서비스 메서드로 확장 가능
+    public List<ChatRoom> getAllChatRooms() {
+        List<ChatRoom> chatRooms = new ArrayList<>();
+
+        File folder = new File("chat"); // ✅ 폴더 경로 동일하게 유지
+        if (!folder.exists()) return chatRooms;
+
+        File[] files = folder.listFiles((dir, name) -> name.endsWith(".txt"));
+        if (files == null) return chatRooms;
+
+        for (File file : files) {
+            String roomName = file.getName().replace(".txt", "");
+            List<String> participants = new ArrayList<>();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    if (line.startsWith("참여자:")) {
+                        String[] parts = line.substring(5).split(",\\s*");
+                        participants = Arrays.asList(parts);
+                        break;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            chatRooms.add(new ChatRoom(roomName, participants));
+        }
+
+        return chatRooms;
+    }
 }

@@ -3,6 +3,8 @@ package view;
 import controller.FriendAddController;
 import controller.LoginController;
 import controller.SignUpController;
+import model.ChatRoom;
+import service.ChatService;
 
 import javax.swing.*;
 import java.awt.*;
@@ -57,7 +59,8 @@ public class MainFrame extends JFrame {
         SignupView signupView = new SignupView(cardLayout, mainPanel);
         // createChatView는 myFriends가 채워진 이후에 다시 초기화됨 (setMyId 참고)
         CreateChatView createChatView = new CreateChatView(cardLayout, mainPanel, myFriends);
-        ChatListView chatListView = new ChatListView(cardLayout, mainPanel);
+        List<ChatRoom> chatRooms = new ChatService().getAllChatRooms(); // 채팅방 목록 불러오기
+        ChatListView chatListView = new ChatListView(cardLayout, mainPanel, chatRooms, myId); // 현재 로그인 사용자 ID 전달
         chatRoomView = new ChatRoomView("채팅방", "사용자", () -> cardLayout.show(mainPanel, "homeView"));
 
         // 메인 패널에 뷰 등록

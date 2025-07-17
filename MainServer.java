@@ -18,7 +18,7 @@ public class MainServer {
     public static void main(String[] args) throws IOException {
         // 포트 9002에서 서버 소켓 생성
         ServerSocket serverSocket = new ServerSocket(9001);
-        System.out.println("서버 시작: 포트 9002");
+        System.out.println("서버 시작: 포트 9001");
 
         // 무한 루프로 클라이언트 연결을 계속 수락
         while (true) {

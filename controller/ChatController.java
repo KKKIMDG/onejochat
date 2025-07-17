@@ -1,8 +1,12 @@
 package controller;
 
+import service.ChatService;
+import model.ChatRoom;
+import view.ChatListView;
 import view.CreateChatView;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.Socket;
 import java.util.List;
@@ -12,12 +16,21 @@ public class ChatController {
     private final CreateChatView createChatView;
     private final Socket socket;
     private final String currentUserId;
+    private final JFrame frame;
+    private final CardLayout cardLayout;
+    private final JPanel mainPanel;
+    private final ChatService chatService = new ChatService();
     private PrintWriter writer;
 
-    public ChatController(CreateChatView createChatView, Socket socket, String currentUserId) {
+    public ChatController(CreateChatView createChatView, Socket socket, String currentUserId,
+                          JFrame frame, CardLayout cardLayout, JPanel mainPanel) {
         this.socket = socket;
         this.currentUserId = currentUserId;
         this.createChatView = createChatView;
+        this.frame = frame;
+        this.cardLayout = cardLayout;
+        this.mainPanel = mainPanel;
+
         try {
             this.writer = new PrintWriter(
                     new BufferedWriter(new OutputStreamWriter(socket.getOutputStream())), true);
@@ -25,23 +38,32 @@ public class ChatController {
             ex.printStackTrace();
             JOptionPane.showMessageDialog(null, "서버 연결 실패 (채팅방)");
         }
+
         setupEventListeners();
     }
 
     private void setupEventListeners() {
-        // 친구 초대 버튼: 친구 추가 & 자동 스크롤
+        // 친구 초대 버튼
         createChatView.getInviteBtn().addActionListener(e -> {
             String selectedFriend = createChatView.getFriendList().getSelectedValue();
             DefaultListModel<String> model = createChatView.getInvitedModel();
             if (selectedFriend != null && !model.contains(selectedFriend)) {
                 model.addElement(selectedFriend);
 
-                // ====== 이 부분이 '초대한 친구' 목록으로 자동 스크롤! ======
                 JList<String> invitedList = createChatView.getInvitedList();
                 int lastIdx = model.getSize() - 1;
                 if (lastIdx >= 0) {
                     invitedList.ensureIndexIsVisible(lastIdx);
                 }
+            }
+        });
+
+        // 초대 취소(삭제) 버튼
+        createChatView.getDeleteBtn().addActionListener(e -> {
+            JList<String> invitedList = createChatView.getInvitedList();
+            String selected = invitedList.getSelectedValue();
+            if (selected != null) {
+                createChatView.getInvitedModel().removeElement(selected);
             }
         });
 
@@ -69,6 +91,18 @@ public class ChatController {
                     sendCreateChatRoomRequest(roomName, invitedFriends);
                     return null;
                 }
+
+                @Override
+                protected void done() {
+                    SwingUtilities.invokeLater(() -> {
+                        List<ChatRoom> roomList = chatService.getAllChatRooms();
+                        ChatListView chatListView = new ChatListView(cardLayout, mainPanel, roomList, currentUserId);
+                        mainPanel.add(chatListView, "chatListView");
+                        cardLayout.show(mainPanel, "chatListView");
+                        mainPanel.revalidate();
+                        mainPanel.repaint();
+                    });
+                }
             }.execute();
         });
     }
@@ -79,13 +113,23 @@ public class ChatController {
                     JOptionPane.showMessageDialog(null, "서버 연결이 없습니다."));
             return;
         }
+
         try {
             writer.println("CREATE_CHATROOM");
             writer.println("roomName:" + roomName);
             writer.println("owner:" + currentUserId);
             writer.println("invited:" + String.join(",", invitedFriends));
-            SwingUtilities.invokeLater(() ->
-                    JOptionPane.showMessageDialog(null, "채팅방 생성 요청 완료"));
+
+            boolean created = chatService.createChatRoomFile(roomName, invitedFriends);
+
+            SwingUtilities.invokeLater(() -> {
+                if (created) {
+                    JOptionPane.showMessageDialog(null, "채팅방 생성 완료 및 파일 저장 성공");
+                } else {
+                    JOptionPane.showMessageDialog(null, "채팅방 생성 요청은 성공했지만 파일 저장 실패");
+                }
+            });
+
         } catch (Exception ex) {
             ex.printStackTrace();
             SwingUtilities.invokeLater(() ->
