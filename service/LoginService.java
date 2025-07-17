@@ -1,4 +1,4 @@
-package KDT.onejochat.service;
+package service;
 
 import java.io.*;
 import java.net.Socket;

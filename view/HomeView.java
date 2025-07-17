@@ -1,6 +1,6 @@
-package KDT.onejochat.view;
+package view;
 
-import KDT.onejochat.controller.LoginController;
+import controller.LoginController;
 
 import javax.swing.*;
 import java.awt.*;

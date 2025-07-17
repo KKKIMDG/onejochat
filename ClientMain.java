@@ -1,6 +1,5 @@
-package KDT.onejochat;
 
-import KDT.onejochat.view.MainFrame;
+import view.MainFrame;
 
 import javax.swing.*;
 import java.net.Socket;

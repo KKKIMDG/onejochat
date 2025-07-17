@@ -1,4 +1,4 @@
-package KDT.onejochat.model;
+package model;
 
 /**
  * 사용자 모델 클래스

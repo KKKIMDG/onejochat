@@ -1,7 +1,7 @@
-package KDT.onejochat.controller;
+package controller;
 
-import KDT.onejochat.view.FriendAddView;
-import KDT.onejochat.view.HomeView;
+import view.FriendAddView;
+import view.HomeView;
 
 import javax.swing.*;
 import java.io.*;
