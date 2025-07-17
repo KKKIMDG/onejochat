@@ -70,7 +70,7 @@ public class LoginController {
 
         try {
             // 서버에 소켓 연결
-            Socket socket = new Socket("100.100.101.27", 9002);
+            Socket socket = new Socket("localhost", 9002);
             BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
 

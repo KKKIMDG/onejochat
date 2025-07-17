@@ -114,7 +114,7 @@ public class SignUpController {
      * @return ID 중복 여부 (true: 중복, false: 사용 가능)
      */
     private boolean sendCheckIdRequestToServer(String id) {
-        try (Socket socket = new Socket("localhost", 9001);
+        try (Socket socket = new Socket("localhost", 9002);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {

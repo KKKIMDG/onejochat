@@ -19,7 +19,7 @@ public class ClientMain {
     public static void main(String[] args) {
         try {
             // 서버에 소켓 연결 (IP: 100.100.101.27, 포트: 9002)
-            Socket socket = new Socket("100.100.101.27", 9002);
+            Socket socket = new Socket("localhost", 9002); // 서버 연결
             System.out.println("서버 연결 성공");
 
             // Swing GUI를 EDT(Event Dispatch Thread)에서 실행
