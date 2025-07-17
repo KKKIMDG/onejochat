@@ -4,13 +4,16 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
-public class CreateChatView extends JDialog {
-    public CreateChatView(JFrame parent) {
-        super(parent, "채팅방 만들기", true);
-        setSize(350, 500);  // 다이얼로그 크기 설정
-        setLocationRelativeTo(parent);  // 부모 기준 가운데 정렬
+public class CreateChatView extends JPanel {
+    private CardLayout cardLayout;
+    private JPanel mainPanel;
+
+    public CreateChatView(CardLayout cardLayout, JPanel mainPanel) {
+        this.cardLayout = cardLayout;
+        this.mainPanel = mainPanel;
+
         setLayout(new BorderLayout());
-        getContentPane().setBackground(Color.WHITE);
+        setBackground(Color.WHITE);
 
         // 🔹 상단 타이틀 및 아이콘
         JPanel topPanel = new JPanel();
@@ -106,11 +109,44 @@ public class CreateChatView extends JDialog {
         bottomPanel.add(secretBtn);
         bottomPanel.add(normalBtn);
 
+        // 뒤로가기 버튼 추가
+        JButton backBtn = new JButton("뒤로가기");
+        backBtn.setFont(new Font("SansSerif", Font.BOLD, 15));
+        backBtn.setForeground(new Color(0x6C757D));
+        backBtn.setBackground(Color.WHITE);
+        backBtn.setFocusPainted(false);
+        backBtn.setBorderPainted(false);
+        backBtn.addActionListener(e -> cardLayout.show(mainPanel, "homeView"));
+
+        JPanel buttonPanel = new JPanel(new BorderLayout());
+        buttonPanel.setBackground(Color.WHITE);
+        buttonPanel.add(bottomPanel, BorderLayout.CENTER);
+        buttonPanel.add(backBtn, BorderLayout.SOUTH);
+
         secretBtn.addActionListener(e -> {
-            SecretChatCodeDialog dialog = new SecretChatCodeDialog((JFrame) SwingUtilities.getWindowAncestor(CreateChatView.this));
+            // 비밀채팅 로직
+            String roomName = roomNameField.getText().trim();
+            if (roomName.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "채팅방 이름을 입력하세요.");
+                return;
+            }
+            // 비밀채팅 코드 다이얼로그 표시
+            JFrame parentFrame = (JFrame) SwingUtilities.getWindowAncestor(this);
+            SecretChatCodeDialog dialog = new SecretChatCodeDialog(parentFrame);
             dialog.setVisible(true);
         });
 
-        add(bottomPanel, BorderLayout.SOUTH);
+        normalBtn.addActionListener(e -> {
+            // 일반채팅 로직
+            String roomName = roomNameField.getText().trim();
+            if (roomName.isEmpty()) {
+                JOptionPane.showMessageDialog(this, "채팅방 이름을 입력하세요.");
+                return;
+            }
+            // 채팅방 생성 후 홈으로 이동
+            cardLayout.show(mainPanel, "homeView");
+        });
+
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 }
