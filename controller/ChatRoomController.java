@@ -11,12 +11,12 @@ import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.List;
 
-public class ChatController {
+public class ChatRoomController {
     private final CreateChatView createChatView;
     private final Socket socket;
     private final String currentUserId; //
 
-    public ChatController(CreateChatView createChatView, Socket socket, String currentUserId) {
+    public ChatRoomController(CreateChatView createChatView, Socket socket, String currentUserId) {
         this.socket = socket;
         this.currentUserId = currentUserId;
         this.createChatView = createChatView;
