@@ -2,6 +2,7 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Arrays;
 
 /**
@@ -14,14 +15,15 @@ public class CreateChatView extends JPanel {
     private CardLayout cardLayout;
     /** 메인 패널 참조 */
     private JPanel mainPanel;
-//
+
     /**
      * 채팅방 생성 뷰 생성자
-     * 
+     *
      * @param cardLayout 카드 레이아웃
      * @param mainPanel 메인 패널
+     * @param friends 친구 리스트
      */
-    public CreateChatView(CardLayout cardLayout, JPanel mainPanel) {
+    public CreateChatView(CardLayout cardLayout, JPanel mainPanel, List<String> friends) {
         this.cardLayout = cardLayout;
         this.mainPanel = mainPanel;
 
@@ -75,8 +77,7 @@ public class CreateChatView extends JPanel {
         inviteTitle.setBorder(BorderFactory.createEmptyBorder(0, 0, 10, 0));
         invitePanel.add(inviteTitle);
 
-        // 더미 친구 리스트: 다빈, 동건
-        java.util.List<String> friends = Arrays.asList("다빈", "동건");
+        // 전달받은 친구 리스트를 기반으로 항목 생성
         for (String friend : friends) {
             JPanel row = new JPanel(new BorderLayout());
             row.setBackground(Color.WHITE);
