@@ -1,4 +1,4 @@
-package view;
+package KDT.onejochat.view;
 
 import javax.swing.*;
 import java.awt.*;

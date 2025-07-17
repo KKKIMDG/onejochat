@@ -1,13 +1,26 @@
-package view;
+package KDT.onejochat.view;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.Arrays;
 
+/**
+ * 채팅방 생성 뷰 클래스
+ * 채팅방을 새로 만드는 화면을 제공하는 클래스입니다.
+ * 채팅방 이름 입력, 친구 초대, 비밀/일반 채팅방 생성 기능을 포함합니다.
+ */
 public class CreateChatView extends JPanel {
+    /** 카드 레이아웃 참조 */
     private CardLayout cardLayout;
+    /** 메인 패널 참조 */
     private JPanel mainPanel;
 
+    /**
+     * 채팅방 생성 뷰 생성자
+     * 
+     * @param cardLayout 카드 레이아웃
+     * @param mainPanel 메인 패널
+     */
     public CreateChatView(CardLayout cardLayout, JPanel mainPanel) {
         this.cardLayout = cardLayout;
         this.mainPanel = mainPanel;
@@ -15,7 +28,7 @@ public class CreateChatView extends JPanel {
         setLayout(new BorderLayout());
         setBackground(Color.WHITE);
 
-        // 🔹 상단 타이틀 및 아이콘
+        // 상단 타이틀 및 아이콘 패널 생성
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setBackground(Color.WHITE);
@@ -37,13 +50,13 @@ public class CreateChatView extends JPanel {
 
         add(topPanel, BorderLayout.NORTH);
 
-        // 🔹 중앙 콘텐츠 영역
+        // 중앙 콘텐츠 영역 패널 생성
         JPanel centerPanel = new JPanel();
         centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
         centerPanel.setBackground(Color.WHITE);
         centerPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 30));
 
-        // 채팅방 이름 입력창
+        // 채팅방 이름 입력창 생성
         JTextField roomNameField = new JTextField();
         roomNameField.setFont(new Font("SansSerif", Font.PLAIN, 15));
         roomNameField.setMaximumSize(new Dimension(Integer.MAX_VALUE, 40));
@@ -51,7 +64,7 @@ public class CreateChatView extends JPanel {
         centerPanel.add(roomNameField);
         centerPanel.add(Box.createRigidArea(new Dimension(0, 20)));
 
-        // 📒 초대할 친구 + 리스트
+        // 초대할 친구 리스트 패널 생성
         JPanel invitePanel = new JPanel();
         invitePanel.setLayout(new BoxLayout(invitePanel, BoxLayout.Y_AXIS));
         invitePanel.setBackground(Color.WHITE);
@@ -87,7 +100,7 @@ public class CreateChatView extends JPanel {
         centerPanel.add(Box.createVerticalGlue());
         add(centerPanel, BorderLayout.CENTER);
 
-        // 🔹 하단 버튼 영역
+        // 하단 버튼 영역 패널 생성
         JPanel bottomPanel = new JPanel(new GridLayout(1, 2, 20, 0));
         bottomPanel.setBorder(BorderFactory.createEmptyBorder(20, 30, 20, 30));
         bottomPanel.setBackground(Color.WHITE);
@@ -109,7 +122,7 @@ public class CreateChatView extends JPanel {
         bottomPanel.add(secretBtn);
         bottomPanel.add(normalBtn);
 
-        // 뒤로가기 버튼 추가
+        // 뒤로가기 버튼 생성
         JButton backBtn = new JButton("뒤로가기");
         backBtn.setFont(new Font("SansSerif", Font.BOLD, 15));
         backBtn.setForeground(new Color(0x6C757D));
@@ -123,6 +136,7 @@ public class CreateChatView extends JPanel {
         buttonPanel.add(bottomPanel, BorderLayout.CENTER);
         buttonPanel.add(backBtn, BorderLayout.SOUTH);
 
+        // 비밀채팅 버튼 이벤트 리스너
         secretBtn.addActionListener(e -> {
             // 비밀채팅 로직
             String roomName = roomNameField.getText().trim();
@@ -136,6 +150,7 @@ public class CreateChatView extends JPanel {
             dialog.setVisible(true);
         });
 
+        // 일반채팅 버튼 이벤트 리스너
         normalBtn.addActionListener(e -> {
             // 일반채팅 로직
             String roomName = roomNameField.getText().trim();
