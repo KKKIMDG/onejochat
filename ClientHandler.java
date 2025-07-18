@@ -67,6 +67,8 @@ public class ClientHandler extends Thread {
                     break;
                 } else if (request.startsWith("INVITE_TO_CHATROOM:")) {
                     handleInviteToChatRoom(request, writer);
+                } else if (request.startsWith("GET_PARTICIPANTS:")) {
+                    handleGetParticipants(request, writer);
                 } else {
                     // 알 수 없는 명령어에 대한 응답
                     writer.write("UNKNOWN_COMMAND\n");
@@ -682,6 +684,54 @@ public class ClientHandler extends Thread {
         } else {
             writer.write("INVITE_TO_CHATROOM_FAIL\n");
         }
+        writer.flush();
+    }
+
+    /**
+     * 채팅방 참여자 목록 요청을 처리합니다.
+     * 채팅방 파일에서 참여자 목록을 읽어서 클라이언트에게 전송합니다.
+     */
+    private void handleGetParticipants(String request, BufferedWriter writer) throws IOException {
+        String ownerId = null, room = null;
+        String[] parts = request.substring("GET_PARTICIPANTS:".length()).split(",");
+        for (String part : parts) {
+            if (part.startsWith("OWNERID=")) ownerId = part.substring(8);
+            else if (part.startsWith("ROOM=")) room = part.substring(5);
+        }
+        if (room == null) {
+            writer.write("GET_PARTICIPANTS_FAIL\n");
+            writer.flush();
+            return;
+        }
+        
+        // 일반방/비밀방 파일명 모두 시도
+        File file = new File(getChatRoomFilename(ownerId, room, false));
+        if (!file.exists()) file = new File(getChatRoomFilename(ownerId, room, true));
+        if (!file.exists()) {
+            writer.write("GET_PARTICIPANTS_FAIL\n");
+            writer.flush();
+            return;
+        }
+        
+        // 파일에서 참여자 목록 읽기
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("참여자:")) {
+                    String participants = line.substring(4).trim();
+                    writer.write("PARTICIPANTS:" + participants + "\n");
+                    writer.flush();
+                    return;
+                }
+            }
+        } catch (IOException e) {
+            writer.write("GET_PARTICIPANTS_FAIL\n");
+            writer.flush();
+            return;
+        }
+        
+        // 참여자 라인을 찾지 못한 경우
+        writer.write("GET_PARTICIPANTS_FAIL\n");
         writer.flush();
     }
 }
