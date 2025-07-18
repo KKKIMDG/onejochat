@@ -150,7 +150,9 @@ public class MainFrame extends JFrame {
                 return;
             }
             FriendAddView friendAddView = new FriendAddView(this);
-            new FriendAddController(friendAddView, socket, myId, homeView);
+            service.FriendService friendService = new service.FriendService();
+            service.UserService userService = new service.UserService();
+            new controller.FriendAddController(friendAddView, friendService, userService, myId);
             friendAddView.setVisible(true);
         });
 
