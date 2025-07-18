@@ -217,25 +217,25 @@ public class ChatRoomView extends JPanel {
             }
         });
 
-        // 실시간 채팅 갱신 스레드 시작
-        new Thread(() -> {
-            int prevLineCount = 0;
-            while (true) {
-                try {
-                    java.util.List<String> lines = getChatHistoryLinesFromServer();
-                    if (lines.size() > prevLineCount) {
-                        // 새 메시지만 추가
-                        for (int i = prevLineCount; i < lines.size(); i++) {
-                            chatArea.append(lines.get(i) + "\n");
-                        }
-                        prevLineCount = lines.size();
-                    }
-                    Thread.sleep(1000); // 1초마다 갱신
-                } catch (Exception e) {
-                    // 무시하고 계속
-                }
-            }
-        }).start();
+        // 실시간 채팅 갱신 스레드 시작 (삭제)
+        // new Thread(() -> {
+        //     int prevLineCount = 0;
+        //     while (true) {
+        //         try {
+        //             java.util.List<String> lines = getChatHistoryLinesFromServer();
+        //             if (lines.size() > prevLineCount) {
+        //                 // 새 메시지만 추가
+        //                 for (int i = prevLineCount; i < lines.size(); i++) {
+        //                     chatArea.append(lines.get(i) + "\n");
+        //                 }
+        //                 prevLineCount = lines.size();
+        //             }
+        //             Thread.sleep(1000); // 1초마다 갱신
+        //         } catch (Exception e) {
+        //             // 무시하고 계속
+        //         }
+        //     }
+        // }).start();
     }
 
     /**
@@ -252,19 +252,12 @@ public class ChatRoomView extends JPanel {
      * 서버에 GET_CHAT_HISTORY 요청을 보내고, 결과를 chatArea에 표시
      */
     private void loadChatHistoryFromServer() {
-        try {
-            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer.println("GET_CHAT_HISTORY:OWNERID=" + ownerId + ",ROOM=" + roomName);
-            writer.flush();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if ("END_OF_HISTORY".equals(line) || "NO_HISTORY".equals(line)) break;
-                chatArea.append(line + "\n");
-            }
-        } catch (Exception e) {
-            chatArea.append("[서버에서 채팅 내역을 불러오지 못했습니다.]\n");
+        java.util.List<String> lines = getChatHistoryLinesFromServer();
+        StringBuilder sb = new StringBuilder();
+        for (String line : lines) {
+            sb.append(line).append("\n");
         }
+        chatArea.setText(sb.toString());
     }
 
     /**
@@ -380,8 +373,8 @@ public class ChatRoomView extends JPanel {
         if (!msg.isEmpty()) {
             boolean sent = sendMessageToServer(msg);
             if (sent) {
-                //appendMessage(userId, msg); // 서버에서 갱신되므로 주석처리
                 inputField.setText("");
+                loadChatHistoryFromServer(); // 메시지 전송 성공 시 채팅 내역 즉시 새로고침
             } else {
                 JOptionPane.showMessageDialog(ChatRoomView.this, "메시지 전송 실패");
             }
