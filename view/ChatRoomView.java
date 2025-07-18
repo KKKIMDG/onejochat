@@ -126,7 +126,7 @@ public class ChatRoomView extends JPanel {
             if (topFrame instanceof view.MainFrame) {
                 ((view.MainFrame) topFrame).refreshFriendsList(); // 친구목록 최신화
             }
-            java.util.Set<String> participants = getCurrentParticipantsFromFile();
+            java.util.Set<String> participants = getParticipantsFromServer();
             java.util.List<String> myFriends = new java.util.ArrayList<>();
             if (topFrame instanceof view.MainFrame) {
                 myFriends = ((view.MainFrame) topFrame).myFriends;
@@ -296,6 +296,33 @@ public class ChatRoomView extends JPanel {
         } catch (Exception e) {
             return false;
         }
+    }
+
+    /**
+     * 서버에서 채팅방 참여자 목록을 가져와서 반환
+     */
+    private java.util.Set<String> getParticipantsFromServer() {
+        java.util.Set<String> set = new java.util.HashSet<>();
+        try {
+            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer.println("GET_PARTICIPANTS:OWNERID=" + ownerId + ",ROOM=" + roomName);
+            writer.flush();
+            String response = reader.readLine();
+            if (response != null && response.startsWith("PARTICIPANTS:")) {
+                String participants = response.substring(13); // "PARTICIPANTS:" 제거
+                String[] ids = participants.split(",");
+                for (String id : ids) {
+                    String trimmed = id.trim();
+                    if (!trimmed.isEmpty()) set.add(trimmed);
+                }
+            }
+        } catch (Exception e) { 
+            e.printStackTrace(); 
+            // 서버에서 가져오기 실패 시 로컬 파일에서 시도
+            return getCurrentParticipantsFromFile();
+        }
+        return set;
     }
 
     /**
