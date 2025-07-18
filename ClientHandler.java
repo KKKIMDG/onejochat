@@ -2,6 +2,9 @@
 
 import java.io.*;
 import java.net.Socket;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * 클라이언트 핸들러 클래스
@@ -11,10 +14,14 @@ import java.net.Socket;
 public class ClientHandler extends Thread {
     /** 클라이언트와의 소켓 연결 */
     private Socket socket;
-//
+    // 현재 로그인 중인 사용자 목록 (중복 로그인 방지)
+    private static final Set<String> loggedInUsers = Collections.synchronizedSet(new HashSet<>());
+    // 현재 핸들러의 로그인 id
+    private String loginId = null;
+
     /**
      * 클라이언트 핸들러 생성자
-     * 
+     *
      * @param socket 클라이언트와의 소켓 연결
      */
     public ClientHandler(Socket socket) {
@@ -82,12 +89,20 @@ public class ClientHandler extends Thread {
 
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            // 연결 종료 시 로그인 목록에서 제거
+            if (loginId != null) {
+                loggedInUsers.remove(loginId);
+                System.out.println("로그아웃: " + loginId);
+            }
+            try { socket.close(); } catch (Exception ignore) {}
+            System.out.println("🔌 클라이언트와 연결 종료됨");
         }
     }
 
     /**
      * 로그인 요청을 처리합니다.
-     * 
+     *
      * @param request 클라이언트로부터 받은 로그인 요청
      * @param writer 클라이언트에게 응답을 보내기 위한 BufferedWriter
      * @throws IOException 입출력 예외
@@ -100,19 +115,27 @@ public class ClientHandler extends Thread {
             if (part.startsWith("ID=")) id = part.substring(3);
             else if (part.startsWith("PW=")) pw = part.substring(3);
         }
-
+        // 중복 로그인 체크
+        if (loggedInUsers.contains(id)) {
+            writer.write("LOGIN_DUPLICATE\n");
+            writer.flush();
+            return;
+        }
         // 로그인 검증 후 결과 전송
         if (checkLogin(id, pw)) {
             writer.write("LOGIN_SUCCESS\n");
+            writer.flush();
+            loggedInUsers.add(id);
+            loginId = id;
         } else {
             writer.write("LOGIN_FAIL\n");
+            writer.flush();
         }
-        writer.flush();
     }
 
     /**
      * 회원가입 요청을 처리합니다.
-     * 
+     *
      * @param request 클라이언트로부터 받은 회원가입 요청
      * @param writer 클라이언트에게 응답을 보내기 위한 BufferedWriter
      * @throws IOException 입출력 예외
@@ -138,7 +161,7 @@ public class ClientHandler extends Thread {
 
     /**
      * ID 중복 확인 요청을 처리합니다.
-     * 
+     *
      * @param request 클라이언트로부터 받은 ID 확인 요청
      * @param writer 클라이언트에게 응답을 보내기 위한 BufferedWriter
      * @throws IOException 입출력 예외
@@ -155,7 +178,7 @@ public class ClientHandler extends Thread {
 
     /**
      * ID로 사용자 검색 요청을 처리합니다.
-     * 
+     *
      * @param request 클라이언트로부터 받은 ID 검색 요청
      * @param writer 클라이언트에게 응답을 보내기 위한 BufferedWriter
      * @throws IOException 입출력 예외
@@ -173,7 +196,7 @@ public class ClientHandler extends Thread {
 
     /**
      * 친구 요청을 처리합니다.
-     * 
+     *
      * @param request 클라이언트로부터 받은 친구 요청
      * @param writer 클라이언트에게 응답을 보내기 위한 BufferedWriter
      * @throws IOException 입출력 예외
@@ -199,7 +222,7 @@ public class ClientHandler extends Thread {
     /**
      * 채팅방 생성 요청을 처리합니다.
      * 클라이언트로부터 채팅방 이름, 방장, 참여자 목록을 받아 파일로 저장합니다.
-     */
+     *//////
     private void handleCreateChatRoom(BufferedReader reader, BufferedWriter writer) throws IOException {
         String roomName = null;
         String owner = null;
@@ -317,7 +340,7 @@ public class ClientHandler extends Thread {
 
     /**
      * 로그인 정보를 검증합니다.
-     * 
+     *
      * @param id 사용자 ID
      * @param pw 사용자 비밀번호
      * @return 로그인 성공 여부
@@ -343,7 +366,7 @@ public class ClientHandler extends Thread {
 
     /**
      * 새로운 사용자를 파일에 추가합니다.
-     * 
+     *
      * @param id 사용자 ID
      * @param pw 사용자 비밀번호
      * @param name 사용자 이름
@@ -365,7 +388,7 @@ public class ClientHandler extends Thread {
 
     /**
      * ID 중복 여부를 확인합니다.
-     * 
+     *
      * @param id 확인할 사용자 ID
      * @return 중복 여부 (true: 중복, false: 사용 가능)
      */
@@ -386,7 +409,7 @@ public class ClientHandler extends Thread {
 
     /**
      * ID로 사용자 이름을 찾습니다.
-     * 
+     *
      * @param id 찾을 사용자 ID
      * @return 사용자 이름 (찾지 못한 경우 null)
      */
@@ -416,7 +439,7 @@ public class ClientHandler extends Thread {
 
     /**
      * 친구 관계를 파일에 추가합니다.
-     * 
+     *
      * @param fromId 친구 요청을 보낸 사용자 ID
      * @param toId 친구 요청을 받은 사용자 ID
      * @return 추가 성공 여부
@@ -703,7 +726,7 @@ public class ClientHandler extends Thread {
             writer.flush();
             return;
         }
-        
+
         // 일반방/비밀방 파일명 모두 시도
         File file = new File(getChatRoomFilename(ownerId, room, false));
         if (!file.exists()) file = new File(getChatRoomFilename(ownerId, room, true));
@@ -712,7 +735,7 @@ public class ClientHandler extends Thread {
             writer.flush();
             return;
         }
-        
+
         // 파일에서 참여자 목록 읽기
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
@@ -729,7 +752,7 @@ public class ClientHandler extends Thread {
             writer.flush();
             return;
         }
-        
+
         // 참여자 라인을 찾지 못한 경우
         writer.write("GET_PARTICIPANTS_FAIL\n");
         writer.flush();
