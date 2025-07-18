@@ -109,7 +109,7 @@ public class SignUpController {
      * @return 회원가입 성공 여부
      */
     private boolean sendSignupRequestToServer(String id, String pw, String name) {
-        try (Socket socket = new Socket("localhost", 9001);
+        try (Socket socket = new Socket("100.100.101.30", 9001);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
@@ -135,7 +135,7 @@ public class SignUpController {
      * @return ID 중복 여부 (true: 중복, false: 사용 가능)
      */
     private boolean sendCheckIdRequestToServer(String id) {
-        try (Socket socket = new Socket("localhost", 9001);
+        try (Socket socket = new Socket("100.100.101.30", 9001);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
