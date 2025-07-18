@@ -52,9 +52,21 @@ public class ClientHandler extends Thread {
                     handleFriendRequest(request, writer);
                 } else if (request.startsWith("CREATE_CHATROOM")) {
                     handleCreateChatRoom(reader, writer);
+                } else if (request.startsWith("CREATE_SECRET_CHATROOM")) {
+                    handleCreateSecretChatRoom(reader, writer);
+                } else if (request.startsWith("SEND_MESSAGE:")) {
+                    handleSendMessage(request, writer);
+                } else if (request.startsWith("GET_CHAT_HISTORY:")) {
+                    handleGetChatHistory(request, writer);
+                } else if (request.startsWith("GET_MY_CHATROOMS:")) {
+                    handleGetMyChatRooms(request, writer);
+                } else if (request.startsWith("LEAVE_CHATROOM:")) {
+                    handleLeaveChatRoom(request, writer);
                 } else if (request.startsWith("QUIT")) {
                     System.out.println("클라이언트 연결 종료 요청");
                     break;
+                } else if (request.startsWith("INVITE_TO_CHATROOM:")) {
+                    handleInviteToChatRoom(request, writer);
                 } else {
                     // 알 수 없는 명령어에 대한 응답
                     writer.write("UNKNOWN_COMMAND\n");
@@ -203,7 +215,7 @@ public class ClientHandler extends Thread {
             writer.flush();
             return;
         }
-        boolean created = createChatRoomFile(roomName, owner, invited);
+        boolean created = createChatRoomFile(owner, roomName, invited);
         if (created) {
             writer.write("CREATE_CHATROOM_SUCCESS\n");
         } else {
@@ -213,18 +225,87 @@ public class ClientHandler extends Thread {
     }
 
     /**
+     * 비밀채팅방 생성 요청을 처리합니다.
+     * 클라이언트로부터 채팅방 이름, 방장, 참여자, 룸코드를 받아 파일로 저장합니다.
+     */
+    private void handleCreateSecretChatRoom(BufferedReader reader, BufferedWriter writer) throws IOException {
+        String roomName = null;
+        String owner = null;
+        String invited = null;
+        String roomCode = null;
+        // 채팅방 정보는 다음 4줄로 온다고 가정
+        for (int i = 0; i < 4; i++) {
+            String line = reader.readLine();
+            if (line == null) break;
+            if (line.startsWith("roomName:")) roomName = line.substring("roomName:".length());
+            else if (line.startsWith("owner:")) owner = line.substring("owner:".length());
+            else if (line.startsWith("invited:")) invited = line.substring("invited:".length());
+            else if (line.startsWith("roomCode:")) roomCode = line.substring("roomCode:".length());
+        }
+        if (roomName == null || owner == null || invited == null || roomCode == null) {
+            writer.write("CREATE_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        boolean created = createSecretChatRoomFile(owner, roomName, invited, roomCode);
+        if (created) {
+            writer.write("CREATE_CHATROOM_SUCCESS\n");
+        } else {
+            writer.write("CREATE_CHATROOM_FAIL\n");
+        }
+        writer.flush();
+    }
+
+    // 파일명 생성 유틸: 비밀방이면 ownerId_roomName.txt, 일반방이면 roomName.txt
+    private String getChatRoomFilename(String ownerId, String roomName, boolean isSecret) {
+        return isSecret ? (ownerId + "_" + roomName + ".txt") : (roomName + ".txt");
+    }
+
+    // 파일이 비밀방인지 확인 (ROOM_CODE 라인 존재 여부)
+    private boolean isSecretChatRoomFile(File file) {
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("ROOM_CODE:")) return true;
+                if (line.startsWith("----------------")) break;
+            }
+        } catch (Exception e) {}
+        return false;
+    }
+
+    /**
      * 채팅방 정보를 파일로 저장합니다.
+     * @param ownerId 방장 ID
      * @param roomName 채팅방 이름
-     * @param owner 방장 ID
      * @param invited 참여자 목록(쉼표 구분)
      * @return 생성 성공 여부
      */
-    private boolean createChatRoomFile(String roomName, String owner, String invited) {
-        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter("chatroom_" + roomName + ".txt"))) {
+    private boolean createChatRoomFile(String ownerId, String roomName, String invited) {
+        String filename = getChatRoomFilename(ownerId, roomName, false);
+        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(filename))) {
             fileWriter.write("ROOM_NAME: " + roomName + System.lineSeparator());
-            fileWriter.write("OWNER: " + owner + System.lineSeparator());
-            fileWriter.write("PARTICIPANTS: " + invited + System.lineSeparator());
+            fileWriter.write("참여자: " + invited + System.lineSeparator());
             fileWriter.write("--------------------" + System.lineSeparator());
+            // 메시지는 append로 추가됨
+            return true;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 비밀채팅방 파일 생성 (ROOM_CODE 라인 포함)
+     */
+    private boolean createSecretChatRoomFile(String ownerId, String roomName, String invited, String roomCode) {
+        String filename = ownerId + "_" + roomName + ".txt";
+        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(filename))) {
+            fileWriter.write("ROOM_NAME: " + roomName + System.lineSeparator());
+            fileWriter.write("OWNER: " + ownerId + System.lineSeparator());
+            fileWriter.write("참여자: " + invited + System.lineSeparator());
+            fileWriter.write("ROOM_CODE: " + roomCode + System.lineSeparator());
+            fileWriter.write("--------------------" + System.lineSeparator());
+            // 메시지는 append로 추가됨
             return true;
         } catch (IOException e) {
             e.printStackTrace();
@@ -346,5 +427,261 @@ public class ClientHandler extends Thread {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * 클라이언트로부터 받은 메시지를 해당 채팅방 파일(ownerId_roomName.txt)에 저장합니다.
+     * 요청 예시: SEND_MESSAGE:OWNERID=alice,ROOM=study,MSG=안녕!
+     */
+    private void handleSendMessage(String request, BufferedWriter writer) throws IOException {
+        String[] parts = request.substring("SEND_MESSAGE:".length()).split(",");
+        String ownerId = null, room = null, msg = null, userId = null;
+        for (String part : parts) {
+            if (part.startsWith("OWNERID=")) ownerId = part.substring(8);
+            else if (part.startsWith("ROOM=")) room = part.substring(5);
+            else if (part.startsWith("MSG=")) msg = part.substring(4);
+            else if (part.startsWith("USERID=")) userId = part.substring(7);
+        }
+        if (room == null || msg == null || userId == null) {
+            writer.write("SEND_MESSAGE_FAIL\n");
+            writer.flush();
+            return;
+        }
+        File file = new File(getChatRoomFilename(ownerId, room, false));
+        if (!file.exists()) file = new File(getChatRoomFilename(ownerId, room, true));
+        if (!file.exists()) {
+            writer.write("SEND_MESSAGE_FAIL\n");
+            writer.flush();
+            return;
+        }
+        try (BufferedWriter fileWriter = new BufferedWriter(new FileWriter(file, true))) {
+            fileWriter.write(userId + ": " + msg + System.lineSeparator());
+            writer.write("SEND_MESSAGE_SUCCESS\n");
+        } catch (IOException e) {
+            writer.write("SEND_MESSAGE_FAIL\n");
+        }
+        writer.flush();
+    }
+
+    /**
+     * 채팅방 입장 시 해당 채팅방 파일(ownerId_roomName.txt)의 내용을 클라이언트에 전송합니다.
+     * 구분선(-----) 이후의 내용만 전송
+     * 요청 예시: GET_CHAT_HISTORY:OWNERID=alice,ROOM=study
+     */
+    private void handleGetChatHistory(String request, BufferedWriter writer) throws IOException {
+        String[] parts = request.substring("GET_CHAT_HISTORY:".length()).split(",");
+        String ownerId = null, room = null;
+        for (String part : parts) {
+            if (part.startsWith("OWNERID=")) ownerId = part.substring(8);
+            else if (part.startsWith("ROOM=")) room = part.substring(5);
+        }
+        if (room == null) {
+            writer.write("GET_CHAT_HISTORY_FAIL\n");
+            writer.flush();
+            return;
+        }
+        File file = new File(getChatRoomFilename(ownerId, room, false));
+        if (!file.exists()) file = new File(getChatRoomFilename(ownerId, room, true));
+        if (!file.exists()) {
+            writer.write("NO_HISTORY\n");
+            writer.flush();
+            return;
+        }
+        boolean afterDivider = false;
+        try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = fileReader.readLine()) != null) {
+                if (afterDivider) {
+                    writer.write(line + "\n");
+                }
+                if (line.startsWith("---")) {
+                    afterDivider = true;
+                }
+            }
+            writer.write("END_OF_HISTORY\n");
+        } catch (IOException e) {
+            writer.write("GET_CHAT_HISTORY_FAIL\n");
+        }
+        writer.flush();
+    }
+
+    /**
+     * 클라이언트가 GET_MY_CHATROOMS:ID=userid 명령을 보내면,
+     * 서버가 userid가 포함된 채팅방 파일(ownerId_roomName.txt)들을 찾아 목록을 전송한다.
+     * 각 채팅방은 'ownerId_roomName' 형식으로 한 줄씩 전송, 마지막에 END_OF_CHATROOMS 전송
+     */
+    private void handleGetMyChatRooms(String request, BufferedWriter writer) throws IOException {
+        String userId = null;
+        String[] parts = request.substring("GET_MY_CHATROOMS:".length()).split(",");
+        for (String part : parts) {
+            if (part.startsWith("ID=")) userId = part.substring(3);
+        }
+        if (userId == null) {
+            writer.write("GET_MY_CHATROOMS_FAIL\n");
+            writer.flush();
+            return;
+        }
+        File dir = new File(".");
+        File[] files = dir.listFiles((d, name) -> name.endsWith(".txt"));
+        if (files == null) {
+            writer.write("END_OF_CHATROOMS\n");
+            writer.flush();
+            return;
+        }
+        for (File file : files) {
+            String fileName = file.getName().replace(".txt", "");
+            String[] nameParts = fileName.split("_", 2);
+            String ownerIdFromFile = nameParts.length > 1 ? nameParts[0] : null;
+            boolean include = false;
+            if (ownerIdFromFile != null && ownerIdFromFile.equals(userId)) {
+                include = true;
+            } else {
+                try (BufferedReader fileReader = new BufferedReader(new FileReader(file))) {
+                    String line;
+                    while ((line = fileReader.readLine()) != null) {
+                        if (line.startsWith("참여자:")) {
+                            if (line.contains(userId)) {
+                                include = true;
+                            }
+                            break;
+                        }
+                    }
+                } catch (IOException e) {
+                    // 무시하고 다음 파일로
+                }
+            }
+            if (include) {
+                writer.write(fileName + "\n");
+            }
+        }
+        writer.write("END_OF_CHATROOMS\n");
+        writer.flush();
+    }
+
+    /**
+     * 채팅방 나가기 요청을 처리합니다.
+     * 채팅방 파일의 참여자 라인에서 userId를 삭제, 참여자 0명이면 파일 삭제
+     */
+    private void handleLeaveChatRoom(String request, BufferedWriter writer) throws IOException {
+        String ownerId = null, room = null, userId = null;
+        String[] parts = request.substring("LEAVE_CHATROOM:".length()).split(",");
+        for (String part : parts) {
+            if (part.startsWith("OWNERID=")) ownerId = part.substring(8);
+            else if (part.startsWith("ROOM=")) room = part.substring(5);
+            else if (part.startsWith("USERID=")) userId = part.substring(7);
+        }
+        if (room == null || userId == null) {
+            writer.write("LEAVE_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        // 일반방/비밀방 파일명 모두 시도
+        File file = new File(getChatRoomFilename(ownerId, room, false));
+        if (!file.exists()) file = new File(getChatRoomFilename(ownerId, room, true));
+        if (!file.exists()) {
+            writer.write("LEAVE_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        // 파일을 읽어서 참여자 라인에서 userId를 삭제
+        StringBuilder sb = new StringBuilder();
+        boolean found = false;
+        boolean hasParticipants = false;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("참여자:")) {
+                    String[] ids = line.substring(4).split(",");
+                    StringBuilder newLine = new StringBuilder("참여자:");
+                    int count = 0;
+                    for (String id : ids) {
+                        String trimmed = id.trim();
+                        if (!trimmed.equals(userId) && !trimmed.isEmpty()) {
+                            if (count > 0) newLine.append(",");
+                            newLine.append(" ").append(trimmed);
+                            count++;
+                        }
+                    }
+                    if (count > 0) {
+                        sb.append(newLine).append(System.lineSeparator());
+                        hasParticipants = true;
+                    }
+                    found = true;
+                } else {
+                    sb.append(line).append(System.lineSeparator());
+                }
+            }
+        }
+        if (!found) {
+            writer.write("LEAVE_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        if (!hasParticipants) {
+            // 참여자 0명이면 파일 삭제
+            file.delete();
+        } else {
+            // 파일 덮어쓰기
+            try (BufferedWriter w = new BufferedWriter(new FileWriter(file, false))) {
+                w.write(sb.toString());
+            }
+        }
+        writer.write("LEAVE_CHATROOM_SUCCESS\n");
+        writer.flush();
+    }
+
+    /**
+     * 친구 초대 요청을 처리합니다.
+     * 채팅방 파일의 참여자 라인에 FRIENDID를 추가(이미 있으면 실패)
+     */
+    private void handleInviteToChatRoom(String request, BufferedWriter writer) throws IOException {
+        String ownerId = null, room = null, friendId = null;
+        String[] parts = request.substring("INVITE_TO_CHATROOM:".length()).split(",");
+        for (String part : parts) {
+            if (part.startsWith("OWNERID=")) ownerId = part.substring(8);
+            else if (part.startsWith("ROOM=")) room = part.substring(5);
+            else if (part.startsWith("FRIENDID=")) friendId = part.substring(9);
+        }
+        if (room == null || friendId == null) {
+            writer.write("INVITE_TO_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        File file = new File(getChatRoomFilename(ownerId, room, false));
+        if (!file.exists()) file = new File(getChatRoomFilename(ownerId, room, true));
+        if (!file.exists()) {
+            writer.write("INVITE_TO_CHATROOM_FAIL\n");
+            writer.flush();
+            return;
+        }
+        // 파일을 읽어서 참여자 라인에 friendId가 이미 있으면 실패, 없으면 추가
+        StringBuilder sb = new StringBuilder();
+        boolean invited = false;
+        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.startsWith("참여자:")) {
+                    if (line.contains(friendId)) {
+                        sb.append(line).append(System.lineSeparator());
+                        invited = false;
+                    } else {
+                        String newLine = line.trim().endsWith(":") ? line + " " + friendId : line + ", " + friendId;
+                        sb.append(newLine).append(System.lineSeparator());
+                        invited = true;
+                    }
+                } else {
+                    sb.append(line).append(System.lineSeparator());
+                }
+            }
+        }
+        if (invited) {
+            try (BufferedWriter w = new BufferedWriter(new FileWriter(file, false))) {
+                w.write(sb.toString());
+            }
+            writer.write("INVITE_TO_CHATROOM_SUCCESS\n");
+        } else {
+            writer.write("INVITE_TO_CHATROOM_FAIL\n");
+        }
+        writer.flush();
     }
 }

@@ -6,7 +6,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.*;
 import java.util.HashSet;
-import java.util.function.Consumer;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
+import java.util.ArrayList;
+import java.util.List;
 //
 /**
  * 홈 뷰 클래스
@@ -26,6 +29,11 @@ public class HomeView extends JPanel {
     private JButton createRoomBtn;
     /** 채팅방 목록 보기 버튼 */
     private JButton listRoomBtn;
+    private JButton deleteFriendBtn;
+    private JButton editFriendBtn;
+    private boolean isEditMode = false;
+    /** 전체 친구 목록(검색용) */
+    private List<String> allFriends = new ArrayList<>();
 
     /**
      * 홈 뷰 생성자
@@ -56,9 +64,59 @@ public class HomeView extends JPanel {
         addFriendBtn.setFocusPainted(false);
         addFriendBtn.setFont(new Font("SansSerif", Font.PLAIN, 14));
 
+        // 친구 삭제 버튼 생성 (순서 이동)
+        deleteFriendBtn = new JButton("삭제");
+        deleteFriendBtn.setFont(new Font("SansSerif", Font.PLAIN, 13));
+        deleteFriendBtn.setBackground(Color.WHITE);
+        deleteFriendBtn.setForeground(Color.RED);
+        deleteFriendBtn.setEnabled(false);
+        deleteFriendBtn.addActionListener(e -> {
+            String selected = friendList.getSelectedValue();
+            if (selected != null) {
+                int confirm = JOptionPane.showConfirmDialog(this, selected + "님을 친구 목록에서 삭제할까요?", "친구 삭제", JOptionPane.YES_NO_OPTION);
+                if (confirm == JOptionPane.YES_OPTION) {
+                    String myId = controller.LoginController.getCurrentUserId();
+                    java.io.File file = new java.io.File("friends_" + myId + ".txt");
+                    java.util.List<String> lines = new java.util.ArrayList<>();
+                    try (java.io.BufferedReader reader = new java.io.BufferedReader(new java.io.FileReader(file))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (!line.trim().equals(selected)) lines.add(line);
+                        }
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                    try (java.io.BufferedWriter writer = new java.io.BufferedWriter(new java.io.FileWriter(file, false))) {
+                        for (String l : lines) writer.write(l + System.lineSeparator());
+                    } catch (Exception ex) { ex.printStackTrace(); }
+                    refreshFriendListFromFile(myId);
+                    JOptionPane.showMessageDialog(this, selected + "님이 삭제되었습니다.");
+                }
+            }
+        });
+
+        // 친구 편집 버튼 생성
+        editFriendBtn = new JButton("친구 편집");
+        editFriendBtn.setBackground(Color.WHITE);
+        editFriendBtn.setForeground(new Color(0x007BFF));
+        editFriendBtn.setBorderPainted(false);
+        editFriendBtn.setFocusPainted(false);
+        editFriendBtn.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        editFriendBtn.addActionListener(e -> {
+            isEditMode = !isEditMode;
+            deleteFriendBtn.setVisible(isEditMode && friendList.getSelectedValue() != null);
+            if (isEditMode) {
+                editFriendBtn.setText("편집 완료");
+            } else {
+                editFriendBtn.setText("친구 편집");
+            }
+        });
+
         // 상단 패널에 컴포넌트 추가
         topPanel.add(logo, BorderLayout.WEST);
-        topPanel.add(addFriendBtn, BorderLayout.EAST);
+        JPanel rightBtnPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 0, 0));
+        rightBtnPanel.setBackground(Color.WHITE);
+        rightBtnPanel.add(addFriendBtn);
+        rightBtnPanel.add(deleteFriendBtn);
+        topPanel.add(rightBtnPanel, BorderLayout.EAST);
 
         // 검색 패널 생성
         JPanel searchPanel = new JPanel(new BorderLayout());
@@ -71,11 +129,51 @@ public class HomeView extends JPanel {
         searchIcon.setBorder(BorderFactory.createEmptyBorder(0, 5, 0, 5));
 
         // 검색 필드 생성
-        JTextField searchField = new JTextField("Search messages, people");
+        JTextField searchField = new JTextField();
+        final String SEARCH_HINT = "Search messages, people";
+        searchField.setText(SEARCH_HINT);
         searchField.setPreferredSize(new Dimension(300, 30));
         searchField.setFont(new Font("SansSerif", Font.PLAIN, 14));
         searchField.setForeground(Color.GRAY);
         searchField.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+
+        // placeholder처럼 동작하게 포커스 이벤트 추가
+        searchField.addFocusListener(new java.awt.event.FocusAdapter() {
+            @Override
+            public void focusGained(java.awt.event.FocusEvent e) {
+                if (searchField.getText().equals(SEARCH_HINT)) {
+                    searchField.setText("");
+                    searchField.setForeground(Color.BLACK);
+                }
+            }
+            @Override
+            public void focusLost(java.awt.event.FocusEvent e) {
+                if (searchField.getText().isEmpty()) {
+                    searchField.setText(SEARCH_HINT);
+                    searchField.setForeground(Color.GRAY);
+                }
+            }
+        });
+
+        // 검색 필드 DocumentListener 추가
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            private void filterFriends() {
+                String keyword = searchField.getText().trim().toLowerCase();
+                friendListModel.clear();
+                if (keyword.isEmpty() || keyword.equals(SEARCH_HINT.toLowerCase())) {
+                    for (String f : allFriends) friendListModel.addElement(f);
+                } else {
+                    for (String f : allFriends) {
+                        if (f.toLowerCase().contains(keyword)) {
+                            friendListModel.addElement(f);
+                        }
+                    }
+                }
+            }
+            @Override public void insertUpdate(DocumentEvent e) { filterFriends(); }
+            @Override public void removeUpdate(DocumentEvent e) { filterFriends(); }
+            @Override public void changedUpdate(DocumentEvent e) { filterFriends(); }
+        });
 
         // 검색 패널에 컴포넌트 추가
         searchPanel.add(searchIcon, BorderLayout.WEST);
@@ -95,6 +193,22 @@ public class HomeView extends JPanel {
         friendList = new JList<>(friendListModel);
         friendList.setFont(new Font("SansSerif", Font.BOLD, 25));
         friendList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        friendList.setCellRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setFont(new Font("SansSerif", Font.BOLD, 25));
+                return label;
+            }
+        });
+        // 친구 선택 시 삭제 버튼 활성화
+        friendList.addListSelectionListener(e -> {
+            if (!e.getValueIsAdjusting() && friendList.getSelectedValue() != null) {
+                deleteFriendBtn.setEnabled(true);
+            } else {
+                deleteFriendBtn.setEnabled(false);
+            }
+        });
 
         // 하단 버튼 패널 생성
         createRoomBtn = new JButton("채팅방 만들기");
@@ -126,6 +240,7 @@ public class HomeView extends JPanel {
         add(topWrapper, BorderLayout.NORTH);
         add(new JScrollPane(friendList), BorderLayout.CENTER);
         add(bottomPanel, BorderLayout.SOUTH);
+        // 삭제 버튼을 친구목록 우측에 배치하는 패널 제거
     }
 
     /**
@@ -163,6 +278,7 @@ public class HomeView extends JPanel {
         if (friendId != null && !friendSet.contains(friendId)) {
             friendSet.add(friendId);
             friendListModel.addElement(friendId);
+            allFriends.add(friendId); // 전체 목록에도 추가
         }
     }
 
@@ -175,6 +291,7 @@ public class HomeView extends JPanel {
         // 기존 목록 초기화
         friendListModel.clear();
         friendSet.clear();
+        allFriends.clear(); // 전체 목록도 초기화
 
         // 친구 목록 파일 읽기
         File file = new File("friends_" + myId + ".txt");
@@ -190,14 +307,6 @@ public class HomeView extends JPanel {
         }
     }
 
-    /**
-     * 뷰 전환 핸들러를 설정합니다.
-     * 버튼 클릭 시 적절한 뷰로 전환하는 기능을 제공합니다.
-     * 
-     * @param handler 뷰 전환을 처리할 Consumer 함수
-     */
-    public void setViewChangeHandler(Consumer<String> handler) {
-        createRoomBtn.addActionListener(e -> handler.accept("createChatRoomView"));
-        listRoomBtn.addActionListener(e -> handler.accept("chatRoomListView"));
-    }
+    public JButton getCreateRoomButton() { return createRoomBtn; }
+    public JButton getListRoomButton() { return listRoomBtn; }
 }

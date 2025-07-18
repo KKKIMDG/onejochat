@@ -2,6 +2,8 @@ package view;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
 
 /**
  * 로그인 뷰 클래스
@@ -16,7 +18,7 @@ public class LoginView extends JPanel {
     private JButton loginButton;
     /** 회원가입 버튼 */
     private JButton joinButton;
-//
+
     /**
      * 로그인 뷰 생성자
      * 
@@ -44,14 +46,57 @@ public class LoginView extends JPanel {
         logo.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
 
         // 사용자 ID 입력 필드 생성 및 설정
-        userIdField = new JTextField("id 입력:");
+        userIdField = new JTextField();
         userIdField.setMaximumSize(new Dimension(250, 40));
         userIdField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        String idHint = "id 입력:";
+        userIdField.setForeground(Color.GRAY);
+        userIdField.setText(idHint);
+        userIdField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                if (userIdField.getText().equals(idHint)) {
+                    userIdField.setText("");
+                    userIdField.setForeground(Color.BLACK);
+                }
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (userIdField.getText().isEmpty()) {
+                    userIdField.setForeground(Color.GRAY);
+                    userIdField.setText(idHint);
+                }
+            }
+        });
 
         // 비밀번호 입력 필드 생성 및 설정
-        passwordField = new JPasswordField("password 입력:");
+        passwordField = new JPasswordField();
         passwordField.setMaximumSize(new Dimension(250, 40));
         passwordField.setFont(new Font("SansSerif", Font.PLAIN, 14));
+        String pwHint = "password 입력:";
+        passwordField.setForeground(Color.GRAY);
+        passwordField.setEchoChar((char)0);
+        passwordField.setText(pwHint);
+        passwordField.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusGained(FocusEvent e) {
+                String pw = new String(passwordField.getPassword());
+                if (pw.equals(pwHint)) {
+                    passwordField.setText("");
+                    passwordField.setForeground(Color.BLACK);
+                    passwordField.setEchoChar('●');
+                }
+            }
+            @Override
+            public void focusLost(FocusEvent e) {
+                String pw = new String(passwordField.getPassword());
+                if (pw.isEmpty()) {
+                    passwordField.setForeground(Color.GRAY);
+                    passwordField.setEchoChar((char)0);
+                    passwordField.setText(pwHint);
+                }
+            }
+        });
 
         // 로그인 버튼 생성 및 설정
         loginButton = new JButton("login");
@@ -92,7 +137,9 @@ public class LoginView extends JPanel {
      * @return 입력된 사용자 ID
      */
     public String getUserId() {
-        return userIdField.getText();
+        String idHint = "id 입력:";
+        String text = userIdField.getText();
+        return text.equals(idHint) ? "" : text;
     }
 
     /**
@@ -101,7 +148,9 @@ public class LoginView extends JPanel {
      * @return 입력된 비밀번호
      */
     public String getPassword() {
-        return new String(passwordField.getPassword());
+        String pwHint = "password 입력:";
+        String pw = new String(passwordField.getPassword());
+        return pw.equals(pwHint) ? "" : pw;
     }
 
     /**
@@ -120,5 +169,18 @@ public class LoginView extends JPanel {
      */
     public JButton getJoinButton() {
         return joinButton;
+    }
+
+    public void setPassword(String pw) {
+        String pwHint = "password 입력:";
+        if (pw == null || pw.isEmpty()) {
+            passwordField.setForeground(Color.GRAY);
+            passwordField.setEchoChar((char)0);
+            passwordField.setText(pwHint);
+        } else {
+            passwordField.setForeground(Color.BLACK);
+            passwordField.setEchoChar('●');
+            passwordField.setText(pw);
+        }
     }
 }

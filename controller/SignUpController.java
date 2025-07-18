@@ -19,6 +19,9 @@ public class SignUpController {
     /** 카드 레이아웃 참조 */
     private CardLayout cardLayout;
 
+    private boolean idChecked = false;
+    private String lastCheckedId = "";
+
     /**
      * 회원가입 컨트롤러 생성자
      * 
@@ -38,6 +41,18 @@ public class SignUpController {
             String id = signupView.getIdInput();
             String pw = signupView.getPasswordInput();
             String pw2 = signupView.getConfirmPasswordInput();
+
+            // 한글 입력 방지
+            if (containsKorean(id) || containsKorean(pw)) {
+                JOptionPane.showMessageDialog(null, "ID와 비밀번호에는 한글을 입력할 수 없습니다.");
+                return;
+            }
+
+            // 아이디 중복확인 여부 체크
+            if (!idChecked || !id.equals(lastCheckedId)) {
+                JOptionPane.showMessageDialog(null, "아이디 중복확인을 먼저 해주세요.");
+                return;
+            }
 
             // 비밀번호 확인 검증
             if (!pw.equals(pw2)) {
@@ -68,13 +83,19 @@ public class SignUpController {
                 JOptionPane.showMessageDialog(signupView, "ID를 입력해주세요.");
                 return;
             }
-
+            if (containsKorean(inputId)) {
+                JOptionPane.showMessageDialog(signupView, "ID에는 한글을 입력할 수 없습니다.");
+                return;
+            }
             // 서버에 ID 중복 확인 요청
             boolean isDuplicate = sendCheckIdRequestToServer(inputId);
             if (isDuplicate) {
                 JOptionPane.showMessageDialog(signupView, "이미 존재하는 ID입니다.");
+                idChecked = false;
             } else {
                 JOptionPane.showMessageDialog(signupView, "사용 가능한 ID입니다.");
+                idChecked = true;
+                lastCheckedId = inputId;
             }
         });
     }
@@ -114,7 +135,7 @@ public class SignUpController {
      * @return ID 중복 여부 (true: 중복, false: 사용 가능)
      */
     private boolean sendCheckIdRequestToServer(String id) {
-        try (Socket socket = new Socket("localhost", 9002);
+        try (Socket socket = new Socket("localhost", 9001);
              BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
              BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()))
         ) {
@@ -131,5 +152,10 @@ public class SignUpController {
             e.printStackTrace();
             return false;
         }
+    }
+
+    // 한글 포함 여부 체크
+    private boolean containsKorean(String str) {
+        return str != null && str.matches(".*[ㄱ-ㅎㅏ-ㅣ가-힣]+.*");
     }
 }
