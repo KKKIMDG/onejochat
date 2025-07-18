@@ -207,18 +207,35 @@ public class ChatRoomView extends JPanel {
         // 메시지 전송 버튼 이벤트 리스너
         sendButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                String msg = inputField.getText().trim();
-                if (!msg.isEmpty()) {
-                    boolean sent = sendMessageToServer(msg);
-                    if (sent) {
-                        appendMessage(userId, msg);
-                        inputField.setText("");
-                    } else {
-                        JOptionPane.showMessageDialog(ChatRoomView.this, "메시지 전송 실패");
-                    }
-                }
+                sendMessageFromInput();
             }
         });
+        // 엔터키로 메시지 전송
+        inputField.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                sendMessageFromInput();
+            }
+        });
+
+        // 실시간 채팅 갱신 스레드 시작
+        new Thread(() -> {
+            int prevLineCount = 0;
+            while (true) {
+                try {
+                    java.util.List<String> lines = getChatHistoryLinesFromServer();
+                    if (lines.size() > prevLineCount) {
+                        // 새 메시지만 추가
+                        for (int i = prevLineCount; i < lines.size(); i++) {
+                            chatArea.append(lines.get(i) + "\n");
+                        }
+                        prevLineCount = lines.size();
+                    }
+                    Thread.sleep(1000); // 1초마다 갱신
+                } catch (Exception e) {
+                    // 무시하고 계속
+                }
+            }
+        }).start();
     }
 
     /**
@@ -355,5 +372,38 @@ public class ChatRoomView extends JPanel {
             }
         } catch (Exception e) { e.printStackTrace(); }
         return set;
+    }
+
+    // 메시지 전송 공통 처리 함수
+    private void sendMessageFromInput() {
+        String msg = inputField.getText().trim();
+        if (!msg.isEmpty()) {
+            boolean sent = sendMessageToServer(msg);
+            if (sent) {
+                //appendMessage(userId, msg); // 서버에서 갱신되므로 주석처리
+                inputField.setText("");
+            } else {
+                JOptionPane.showMessageDialog(ChatRoomView.this, "메시지 전송 실패");
+            }
+        }
+    }
+
+    // 서버에서 전체 채팅 내역을 받아오는 함수 (리스트 반환)
+    private java.util.List<String> getChatHistoryLinesFromServer() {
+        java.util.List<String> lines = new java.util.ArrayList<>();
+        try {
+            PrintWriter writer = new PrintWriter(socket.getOutputStream(), true);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            writer.println("GET_CHAT_HISTORY:OWNERID=" + ownerId + ",ROOM=" + roomName);
+            writer.flush();
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if ("END_OF_HISTORY".equals(line) || "NO_HISTORY".equals(line)) break;
+                lines.add(line);
+            }
+        } catch (Exception e) {
+            // 무시
+        }
+        return lines;
     }
 }
